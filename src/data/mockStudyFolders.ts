@@ -424,6 +424,158 @@ export const INITIAL_STUDY_FOLDERS: StudyFolder[] = [
         },
       },
     ],
+    podcastSources: [
+      {
+        id: 'pod-bio-1',
+        title: 'Ep. 42: Engineering Synthetic Carbon Fixation & C4 Rice',
+        showName: 'Nature Bioenergetics Podcast',
+        platform: 'Spotify',
+        duration: '38:15',
+        episodeUrl: 'https://open.spotify.com/episode/bioenergetics-42',
+        segments: [
+          {
+            id: 'seg-1',
+            timestamp: '06:40',
+            seconds: 400,
+            topic: 'Why Form I RuBisCO Evolved Before Oxygenic Atmosphere',
+            transcriptSnippet:
+              'When RuBisCO first evolved in ancient cyanobacteria 3 billion years ago, atmospheric O2 was virtually zero—so active-site oxygen discrimination was never selected for...',
+          },
+          {
+            id: 'seg-2',
+            timestamp: '14:05',
+            seconds: 845,
+            topic: 'Synthetic CETCH Cycle vs. Kranz C4 Bioengineering',
+            transcriptSnippet:
+              'By replacing RuBisCO with crotonyl-CoA carboxylase/reductase—the fastest carboxylase discovered—synthetic pathways cut ATP loss by 35% compared to natural C3 photorespiration...',
+          },
+        ],
+        summaryByComplexity: {
+          1: 'This podcast episode chats about how scientists are teaching rice plants the same turbocharger trick that corn uses, so farms can grow more food in hot weather!',
+          2: 'Hosts interview plant synthetic biologists on why RuBisCO is so slow and how introducing C4 Kranz traits into C3 rice could boost global crop yields by up to 50%.',
+          3: 'Examines evolutionary constraints on Form I RuBisCO from anoxic Archean oceans and compares transgenic C4 rice engineering against synthetic carbon-fixation cycles (CETCH).',
+          4: 'Evaluates kinetic bottlenecks in installing two-cell Kranz decarboxylation pathways into Oryza sativa, contrasting PEPC/PPDK overexpression against reductive CoA carboxylase kinetics.',
+          5: 'Critiques metabolic flux partitioning in synthetic enoyl-CoA carboxylase/reductase (ECR) cascades versus bundle-sheath suberization gene-regulatory networks in engineered C4 monocots.',
+        },
+      },
+    ],
+    webArticleSources: [
+      {
+        id: 'art-bio-1',
+        title: 'How Rising Global Temperatures Push C3 Forests Toward the Γ* Compensation Wall',
+        domain: 'quantamagazine.org',
+        url: 'https://www.quantamagazine.org/photosynthesis-thermal-limits',
+        author: 'Elena Vance, Ph.D.',
+        readingTime: '7 min read',
+        savedVia: 'Chrome Extension',
+        highlights: [
+          'Above 34°C, differential gas solubility and RuBisCO specificity degradation divert over 38% of thylakoid electron flow into photorespiratory salvage.',
+          'Tropical canopy leaves operate within 2–3°C of their Rubisco activase thermal denaturation threshold.',
+        ],
+        summaryByComplexity: {
+          1: 'A web article saved via the Chrome Extension explaining why trees pant and slow down on scorching summer afternoons.',
+          2: 'Explains how heatwaves impact forest carbon absorption by accelerating photorespiration and deactivating RuBisCO helper enzymes.',
+          3: 'Synthesizes field eddy-covariance measurements showing canopy carbon sink saturation above 34°C due to Γ* elevation and Rubisco activase thermolability.',
+          4: 'Connects leaf-scale Farquhar Wc/Wj inflection shifts to biosphere-atmosphere carbon feedback loops under RCP 4.5 warming trajectories.',
+          5: 'Integrates mesophyll conductance (gm) thermal deactivation with Rubisco activase (RCA) AAA+ chaperone unfolding kinetics across neotropical canopy strata.',
+        },
+      },
+    ],
+    anchoredNotes: [
+      {
+        id: 'note-1',
+        sourceType: 'pdf',
+        sourceTitle: 'Farquhar_Biochemical_Model_of_Photosynthesis_p1-14.pdf',
+        locatorLabel: 'PDF Page 4',
+        locatorPage: 4,
+        highlightQuote: 'A = (1 - Γ*/Ci) · min(Wc, Wj) - Rd',
+        userAnnotation:
+          'Crucial exam formula! The hard min(Wc, Wj) switch happens because RuBisCO active sites (~2.5 mM) are saturated by RuBP (~4 mM) until light drops.',
+        tags: ['#exam-formula', '#page-4-proof', '#rubisco-kinetics'],
+        createdAt: '10 mins ago',
+      },
+      {
+        id: 'note-2',
+        sourceType: 'youtube',
+        sourceTitle: 'Lecture 08: Photosynthesis — Light Reactions, Z-Scheme & Calvin Cycle',
+        locatorLabel: 'Video @ 11:20',
+        locatorSeconds: 680,
+        highlightQuote: '14 c-subunits in CF0 require 4.67 H+ per ATP → Linear flow yields only 2.57 ATP per 2 NADPH.',
+        userAnnotation:
+          'Links directly to Page 8 of the PDF! Explains why Cyclic Electron Flow around PSI is mandatory to hit the 3:2 ATP:NADPH ratio.',
+        tags: ['#z-scheme', '#atp-stoichiometry', '#lecture-supplement'],
+        createdAt: '25 mins ago',
+      },
+      {
+        id: 'note-3',
+        sourceType: 'podcast',
+        sourceTitle: 'Ep. 42: Engineering Synthetic Carbon Fixation & C4 Rice',
+        locatorLabel: 'Podcast @ 14:05',
+        locatorSeconds: 845,
+        highlightQuote: 'Crotonyl-CoA carboxylase/reductase cuts photorespiratory ATP loss by 35% in vitro.',
+        userAnnotation:
+          'Great real-world synthesis hook for the Literature Review introduction comparing natural C4 (Sage et al.) vs synthetic biology.',
+        tags: ['#synthetic-bio', '#c4-evolution', '#podcast-insight'],
+        createdAt: '1 hour ago',
+      },
+    ],
+    synthesisThreads: [
+      {
+        id: 'thread-bio-1',
+        title: 'Literature Review: Resolving the C3 Photorespiratory Bottleneck Across Scales',
+        category: 'Literature Review',
+        tags: ['#bioenergetics', '#multi-source-synthesis', '#midterm-brief'],
+        updatedAt: 'Updated 15m ago',
+        thesisByComplexity: {
+          1: 'By combining our PDF papers, YouTube lecture, podcast, and web article, we see one big story: plants lose energy when heat confuses RuBisCO, and nature (corn) plus scientists (super-rice) are building clever CO2 pumps to fix it!',
+          2: 'This cross-source thread unites 4 mediums: Farquhar’s PDF quantifies the photorespiration problem (Page 4), the YouTube lecture (11:20) explains the ATP battery math, Sage’s PDF shows how C4 plants evolved a natural CO2 pump, and the Nature Podcast (14:05) explores how scientists engineer that pump into rice.',
+          3: 'A multi-modal synthesis bridging biochemical theory (Farquhar Page 4 & 8), structural biophysics (MIT Lecture @ 11:20 & 18:45), evolutionary comparative anatomy (Sage Page 5 & 9), and synthetic biology (Nature Podcast @ 14:05) around the stoichiometric limits of carbon fixation.',
+          4: 'Integrates four heterogeneous sources to prove that the Pareto-constrained transition state of Form I RuBisCO forces a universal bioenergetic trade-off between diffusive CO2 concentration (C4/CAM Kranz pumps) and thylakoid cyclic photophosphorylation.',
+          5: 'Cross-medium scholarly synthesis uniting the FvCB piecewise operator (PDF 1, p. 4), CF0-CF1 c14-ring rotational stoichiometry (Video @ 11:20), Kranz bundle-sheath leakiness bounds (PDF 2, p. 9), and synthetic ECR carboxylation cascades (Audio @ 14:05).',
+        },
+        blocks: [
+          {
+            id: 'tb-1',
+            sourceBadge: 'Farquhar PDF',
+            sourceType: 'pdf',
+            locator: 'Page 4 & Page 11',
+            insightByComplexity: {
+              1: 'Establishes the baseline problem: hot weather makes the sugar-making worker grab oxygen by mistake.',
+              2: 'Defines the mathematical bottleneck A = (1 - Γ*/Ci)·min(Wc, Wj) - Rd and shows photorespiration doubling above 30°C.',
+              3: 'Quantifies the exponential thermal rise of Γ* and the piecewise transition between RuBisCO-limited and RuBP-limited assimilation.',
+              4: 'Derives the competitive Michaelis-Menten oxygenation penalty (3.5 Φ ATP per vc) driving quantum yield degradation.',
+              5: 'Formalizes the singular perturbation boundary between active-site saturation [Et] > Km(RuBP) and electron transport limitation.',
+            },
+          },
+          {
+            id: 'tb-2',
+            sourceBadge: 'MIT Lecture Video',
+            sourceType: 'youtube',
+            locator: 'Timestamp 11:20',
+            insightByComplexity: {
+              1: 'Shows how the plant’s spinning waterwheel needs extra loops of electrons to keep the batteries charged.',
+              2: 'Proves that linear electron flow only yields 2.57 ATP per 2 NADPH, requiring Cyclic Electron Flow around PSI.',
+              3: 'Connects the c14 subunit ring of chloroplast ATP synthase (4.67 H+/ATP) to the stromal 3:2 ATP:NADPH deficit.',
+              4: 'Demonstrates why rising photorespiratory flux (Φ) obligates dynamic upregulation of PGR5/NDH cyclic electron transport.',
+              5: 'Resolves the bioenergetic coupling constraint between Q-cycle proton translocation (3 H+/e-) and CF0-CF1 rotary catalysis.',
+            },
+          },
+          {
+            id: 'tb-3',
+            sourceBadge: 'Nature Podcast + Quanta Article',
+            sourceType: 'podcast',
+            locator: 'Audio @ 14:05 & Web §2',
+            insightByComplexity: {
+              1: 'Shows how forests struggle in heatwaves and how scientists are building heat-proof crops for the future.',
+              2: 'Links real-world tropical forest heat stress (Quanta article) to synthetic C4 rice engineering (Podcast @ 14:05).',
+              3: 'Bridges field-scale canopy Rubisco activase denaturation with transgenic Kranz C4 and CETCH pathway engineering.',
+              4: 'Contrasts natural evolutionary C4 workarounds (5 ATP cost) against synthetic enoyl-CoA carboxylase pathways.',
+              5: 'Synthesizes macro-ecological eddy-covariance thermal thresholds with cell-specific bundle-sheath transcriptional engineering.',
+            },
+          },
+        ],
+      },
+    ],
   },
   {
     id: 'folder-cs-229',
@@ -603,6 +755,99 @@ export const INITIAL_STUDY_FOLDERS: StudyFolder[] = [
           4: 'Cross-referencing **PDF Page 4** with the **YouTube lecture at 03:15** connects forward-pass statistics to backward-pass optimization: the PDF states the `d_k^(-1/2)` normalization rule, while the lecture at **03:15** proves that summing `d_k` independent product variables `q_i k_i` yields `Var(z) = d_k`, which degenerates the softmax Jacobian `J = diag(p) - pp^T` into a near-zero matrix unless scaled by `1/√d_k`.',
           5: 'While **Page 4 of Vaswani et al.** briefly cites second-moment growth `Var(q^T k) = d_k` in Footnote 4, the **YouTube lecture at 03:15** provides the complete dynamical systems proof: unscaled inner products induce an O(√d_k) inverse-temperature blowup in the Gibbs distribution, collapsing the spectral norm of the softmax Jacobian `||diag(p) - pp^T||_2` at rate `O(exp(-√d_k))` and stalling gradient descent on the query-key bilinear subspace.',
         },
+      },
+    ],
+    podcastSources: [
+      {
+        id: 'pod-cs-1',
+        title: 'Ep. 118: Tri Dao on Hardware-Aware AI & FlashAttention-3',
+        showName: 'Latent Space AI Systems Podcast',
+        platform: 'Apple Podcasts',
+        duration: '46:10',
+        episodeUrl: 'https://podcasts.apple.com/us/podcast/latent-space-118',
+        segments: [
+          {
+            id: 'cs-seg-1',
+            timestamp: '09:15',
+            seconds: 555,
+            topic: 'Why FLOPs Don’t Matter When HBM Bandwidth Starves Tensor Cores',
+            transcriptSnippet:
+              'Even though an H100 has nearly 1,000 TFLOPs of FP16 compute, standard PyTorch attention spends 80% of wall-clock time waiting on HBM reads and writes...',
+          },
+        ],
+        summaryByComplexity: {
+          1: 'An Apple Podcasts interview explaining how clever memory tricks make AI chatbots answer 5 times faster!',
+          2: 'Explores why modern GPUs are bottlenecked by memory movement rather than math speed, and how kernel fusion solves it.',
+          3: 'Analyzes IO-aware algorithm design on Hopper H100 GPUs, asynchronous warp-group MMA instructions, and FP8 quantization.',
+          4: 'Details producer-consumer warp specialization and ping-pong SRAM buffering to overlap WGMMA tensor core compute with TMA memory transfers.',
+          5: 'Formalizes asynchronous hardware-software co-design on SM90 architectures via Tensor Memory Accelerator (TMA) descriptor pipelines and non-blocking softmax rescaling.',
+        },
+      },
+    ],
+    webArticleSources: [
+      {
+        id: 'art-cs-1',
+        title: 'Visualizing GPU SRAM Tiling & Roofline Bottlenecks in Long-Context LLMs',
+        domain: 'distill.pub',
+        url: 'https://distill.pub/2025/gpu-sram-attention-roofline',
+        author: 'S. Chen & K. Arora',
+        readingTime: '9 min read',
+        savedVia: 'Chrome Extension',
+        highlights: [
+          'Arithmetic intensity (FLOPs per byte transferred) determines whether a neural operator sits on the sloped memory roof or flat compute roof.',
+        ],
+        summaryByComplexity: {
+          1: 'A visual blog post showing how computer chips juggle puzzle pieces in their fastest pocket memory.',
+          2: 'Uses interactive roofline charts to show how tiling moves self-attention from memory-bound to compute-bound.',
+          3: 'Provides roofline performance models comparing naive PyTorch attention against fused Triton and CUDA FlashAttention kernels.',
+          4: 'Quantifies L2 cache hit rates, shared-memory bank conflicts, and register pressure across sequence lengths N = 1K to 128K.',
+          5: 'Derives tight Hong-Kung red-blue pebble game lower bounds for hierarchical SRAM-HBM communication across multi-query and grouped-query attention.',
+        },
+      },
+    ],
+    anchoredNotes: [
+      {
+        id: 'cs-note-1',
+        sourceType: 'pdf',
+        sourceTitle: 'Vaswani_et_al_Attention_Is_All_You_Need_p1-11.pdf',
+        locatorLabel: 'PDF Page 4',
+        locatorPage: 4,
+        highlightQuote: 'Attention(Q, K, V) = softmax(QK^T / √d_k)V',
+        userAnnotation:
+          'Footnote 4 is the key to the √d_k scaling factor: keeps dot-product variance at 1 so softmax gradients do not vanish.',
+        tags: ['#self-attention', '#page-4-formula', '#vanishing-gradients'],
+        createdAt: '30 mins ago',
+      },
+    ],
+    synthesisThreads: [
+      {
+        id: 'thread-cs-1',
+        title: 'Project Brief: From Vaswani O(N²) Self-Attention to IO-Aware SRAM Tiling',
+        category: 'Project Brief',
+        tags: ['#transformers', '#flash-attention', '#gpu-systems'],
+        updatedAt: 'Updated 1h ago',
+        thesisByComplexity: {
+          1: 'Shows how the original Transformer idea made AI super smart, and how FlashAttention made it super fast by using the chip’s workbench memory!',
+          2: 'Combines Vaswani’s original Transformer paper (Page 4) with the Stanford systems lecture (12:20) and Latent Space podcast to explain how modern AI handles 100K-word documents.',
+          3: 'Synthesizes the theoretical formulation of Scaled Dot-Product Attention with hardware-aware SRAM tiling and roofline optimization.',
+          4: 'Bridges algorithmic complexity (O(N²d)) with physical HBM-SRAM bandwidth hierarchies to explain modern long-context LLM scaling.',
+          5: 'Unifies RKHS bilinear attention operators with Hong-Kung I/O complexity lower bounds and SM90 asynchronous warp-specialized kernel execution.',
+        },
+        blocks: [
+          {
+            id: 'cs-tb-1',
+            sourceBadge: 'Vaswani PDF + Video @ 03:15',
+            sourceType: 'pdf',
+            locator: 'Page 4 & Video 03:15',
+            insightByComplexity: {
+              1: 'Explains how words score each other and why dividing by √d_k keeps the scores fair.',
+              2: 'Proves why 1/√d_k scaling prevents softmax saturation while introducing the N×N matrix bottleneck.',
+              3: 'Establishes O(1) sequential path length via QK^T/√d_k while exposing O(N²) HBM intermediate materialization.',
+              4: 'Connects unit-variance preservation in forward logits to non-vanishing Jacobian spectra in backward passes.',
+              5: 'Formalizes the exact stochastic Gram matrix P ∈ ℝ^(N×N) whose explicit HBM materialization bounds throughput.',
+            },
+          },
+        ],
       },
     ],
   },

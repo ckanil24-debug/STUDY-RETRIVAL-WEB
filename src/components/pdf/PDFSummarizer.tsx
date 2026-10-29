@@ -9,7 +9,10 @@ import {
   Sparkles,
   Scale,
   ArrowUpRight,
-  Layers,
+  ZoomIn,
+  ZoomOut,
+  Eye,
+  BookmarkPlus,
 } from 'lucide-react';
 import {
   ComplexityLevel,
@@ -22,18 +25,23 @@ interface PDFSummarizerProps {
   pdfSources: PDFSource[];
   multiPdfComparison: MultiPDFComparisonRow[];
   complexity: ComplexityLevel;
+  onPinPageAnchor?: (pdfName: string, page: number, quote: string) => void;
 }
 
 export const PDFSummarizer: React.FC<PDFSummarizerProps> = ({
   pdfSources,
   multiPdfComparison,
   complexity,
+  onPinPageAnchor,
 }) => {
   const [activePdfId, setActivePdfId] = useState<string>(pdfSources[0]?.id || '');
   const [selectedForCompare, setSelectedForCompare] = useState<string[]>(
     pdfSources.map((p) => p.id)
   );
   const [showCompareMatrix, setShowCompareMatrix] = useState<boolean>(false);
+  const [showPdfReader, setShowPdfReader] = useState<boolean>(false);
+  const [pdfZoom, setPdfZoom] = useState<number>(100);
+  const [selectedPage, setSelectedPage] = useState<number>(4);
   const [glossarySearch, setGlossarySearch] = useState<string>('');
 
   const activePdf =
@@ -70,7 +78,7 @@ export const PDFSummarizer: React.FC<PDFSummarizerProps> = ({
         <div className="space-y-2">
           <div className="flex items-center gap-2">
             <span className="text-[11px] font-mono uppercase px-2.5 py-0.5 rounded-full bg-cyan-500/15 text-cyan-300 border border-cyan-500/30">
-              3-Tier Hierarchical PDF Summarizer
+              3-Tier Hierarchical PDF Summarizer & Viewer
             </span>
             <span
               className={`text-[11px] font-semibold px-2.5 py-0.5 rounded-full border ${complexityMeta.badgeColor}`}
@@ -108,9 +116,25 @@ export const PDFSummarizer: React.FC<PDFSummarizerProps> = ({
           </div>
         </div>
 
-        {/* Multi-PDF Cross-Referencing Toggle */}
-        {pdfSources.length > 1 && (
-          <div className="flex items-center gap-3 shrink-0">
+        {/* Right Controls: In-App PDF Viewer Toggle + Multi-PDF Matrix Toggle */}
+        <div className="flex flex-wrap items-center gap-2.5 shrink-0">
+          <button
+            type="button"
+            onClick={() => {
+              setShowPdfReader(!showPdfReader);
+              setShowCompareMatrix(false);
+            }}
+            className={`px-3.5 py-2.5 rounded-xl font-semibold text-xs flex items-center gap-2 border transition-all ${
+              showPdfReader
+                ? 'bg-indigo-600 text-white border-indigo-400 shadow-lg shadow-indigo-500/20'
+                : 'bg-slate-950 hover:bg-slate-800 text-slate-200 border-slate-800'
+            }`}
+          >
+            <Eye className="w-4 h-4 text-indigo-400" />
+            <span>{showPdfReader ? 'Hide In-App PDF Reader' : 'Open In-App PDF Viewer'}</span>
+          </button>
+
+          {pdfSources.length > 1 && (
             <button
               type="button"
               onClick={() => setShowCompareMatrix(!showCompareMatrix)}
@@ -124,12 +148,127 @@ export const PDFSummarizer: React.FC<PDFSummarizerProps> = ({
               <span>
                 {showCompareMatrix
                   ? 'Back to Single-PDF 3-Tier View'
-                  : `Compare ${pdfSources.length} PDFs (Cross-Reference Matrix)`}
+                  : `Compare ${pdfSources.length} PDFs (Matrix)`}
               </span>
             </button>
-          </div>
-        )}
+          )}
+        </div>
       </div>
+
+      {/* Optional In-App PDF Viewer with Smooth Scrolling & Zoom Controls (PRD 4.1) */}
+      {showPdfReader && !showCompareMatrix && (
+        <div className="rounded-2xl bg-slate-900/95 border border-indigo-500/40 p-4 sm:p-5 space-y-4 shadow-2xl">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 pb-3">
+            <div className="flex items-center gap-2.5">
+              <FileText className="w-4 h-4 text-indigo-400" />
+              <span className="text-xs sm:text-sm font-bold text-white font-mono">
+                {activePdf.filename}
+              </span>
+              <span className="text-[11px] font-mono px-2 py-0.5 rounded bg-slate-800 text-slate-300">
+                Page {selectedPage} of {activePdf.pageCount}
+              </span>
+            </div>
+
+            {/* Smooth Zoom & Page Controls */}
+            <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1 bg-slate-950 border border-slate-800 rounded-xl px-2 py-1">
+                <button
+                  type="button"
+                  onClick={() => setPdfZoom((z) => Math.max(75, z - 15))}
+                  className="p-1 text-slate-400 hover:text-white"
+                  title="Zoom Out"
+                >
+                  <ZoomOut className="w-3.5 h-3.5" />
+                </button>
+                <span className="text-xs font-mono text-indigo-300 px-2">
+                  {pdfZoom}%
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setPdfZoom((z) => Math.min(160, z + 15))}
+                  className="p-1 text-slate-400 hover:text-white"
+                  title="Zoom In"
+                >
+                  <ZoomIn className="w-3.5 h-3.5" />
+                </button>
+              </div>
+
+              <div className="flex items-center gap-1">
+                {[2, 4, 8, 11].map((pg) => (
+                  <button
+                    key={pg}
+                    type="button"
+                    onClick={() => setSelectedPage(pg)}
+                    className={`px-2.5 py-1 rounded-lg text-xs font-mono transition ${
+                      selectedPage === pg
+                        ? 'bg-indigo-600 text-white font-bold'
+                        : 'bg-slate-950 text-slate-400 hover:text-white border border-slate-800'
+                    }`}
+                  >
+                    p.{pg}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Scrollable Manuscript Canvas */}
+          <div className="max-h-80 overflow-y-auto rounded-xl bg-slate-950 border border-slate-800 p-6 space-y-5 scroll-smooth">
+            <div
+              style={{ fontSize: `${pdfZoom}%` }}
+              className="max-w-3xl mx-auto space-y-4 text-slate-200 leading-relaxed transition-all"
+            >
+              <div className="flex items-center justify-between text-xs font-mono text-slate-500 border-b border-slate-800/80 pb-2">
+                <span>{activePdf.authors} ({activePdf.publicationYear})</span>
+                <span>MANUSCRIPT PAGE {selectedPage}</span>
+              </div>
+
+              {activePdf.summary.argumentMap.map((node) => (
+                <div
+                  key={node.id}
+                  onClick={() => setSelectedPage(node.pageRef)}
+                  className={`p-4 rounded-xl border transition cursor-pointer ${
+                    selectedPage === node.pageRef
+                      ? 'bg-indigo-950/30 border-indigo-500/50'
+                      : 'bg-slate-900/50 border-slate-800/70'
+                  }`}
+                >
+                  <div className="flex items-center justify-between mb-1.5">
+                    <span className="text-xs font-mono font-bold text-indigo-300">
+                      § Page {node.pageRef} — {node.heading}
+                    </span>
+                    {onPinPageAnchor && (
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onPinPageAnchor(
+                            activePdf.filename,
+                            node.pageRef,
+                            node.formulaOrHighlight || node.heading
+                          );
+                        }}
+                        className="px-2.5 py-1 rounded-lg bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 border border-emerald-500/30 text-[11px] font-sans font-semibold flex items-center gap-1"
+                      >
+                        <BookmarkPlus className="w-3 h-3" />
+                        <span>Anchor Highlight (p.{node.pageRef})</span>
+                      </button>
+                    )}
+                  </div>
+                  {node.formulaOrHighlight && (
+                    <div className="my-2 px-3 py-2 rounded bg-slate-950 border border-amber-500/30 font-mono text-amber-300 text-xs">
+                      {node.formulaOrHighlight}
+                    </div>
+                  )}
+                  <p className="text-slate-300 text-sm">
+                    {node.contentByComplexity[complexity]}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* View Mode A: Multi-PDF Cross-Referencing Matrix */}
       {showCompareMatrix && pdfSources.length > 1 ? (
@@ -296,10 +435,36 @@ export const PDFSummarizer: React.FC<PDFSummarizerProps> = ({
                         <h4 className="text-sm font-bold text-white">{node.heading}</h4>
                       </div>
 
-                      <span className="px-2.5 py-0.5 rounded-md bg-indigo-500/15 text-indigo-300 border border-indigo-500/30 font-mono text-xs font-semibold flex items-center gap-1">
-                        <span>Page {node.pageRef}</span>
-                        <ArrowUpRight className="w-3 h-3" />
-                      </span>
+                      <div className="flex items-center gap-1.5">
+                        {onPinPageAnchor && (
+                          <button
+                            type="button"
+                            onClick={() =>
+                              onPinPageAnchor(
+                                activePdf.filename,
+                                node.pageRef,
+                                node.formulaOrHighlight || node.heading
+                              )
+                            }
+                            className="px-2 py-0.5 rounded-md bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 border border-emerald-500/30 text-[11px] font-medium flex items-center gap-1"
+                            title="Bind highlight to Page Locator"
+                          >
+                            <BookmarkPlus className="w-3 h-3" />
+                            <span>Pin Note</span>
+                          </button>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setSelectedPage(node.pageRef);
+                            setShowPdfReader(true);
+                          }}
+                          className="px-2.5 py-0.5 rounded-md bg-indigo-500/15 hover:bg-indigo-500/25 text-indigo-300 border border-indigo-500/30 font-mono text-xs font-semibold flex items-center gap-1"
+                        >
+                          <span>Page {node.pageRef}</span>
+                          <ArrowUpRight className="w-3 h-3" />
+                        </button>
+                      </div>
                     </div>
 
                     {node.formulaOrHighlight && (

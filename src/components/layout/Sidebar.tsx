@@ -97,7 +97,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                       {folder.name}
                     </span>
                   </div>
-                  <div className="flex items-center gap-3 mt-2 text-[11px] text-slate-400">
+                  <div className="flex flex-wrap items-center gap-2.5 mt-2 text-[10px] text-slate-400">
                     <span className="flex items-center gap-1">
                       <Video className="w-3 h-3 text-rose-400" />
                       {folder.youtubeSources.length} Video
@@ -106,6 +106,16 @@ export const Sidebar: React.FC<SidebarProps> = ({
                       <FileText className="w-3 h-3 text-cyan-400" />
                       {folder.pdfSources.length} PDFs
                     </span>
+                    {(folder.podcastSources?.length || 0) > 0 && (
+                      <span className="text-purple-300 font-mono">
+                        +{folder.podcastSources?.length} Pod
+                      </span>
+                    )}
+                    {(folder.webArticleSources?.length || 0) > 0 && (
+                      <span className="text-emerald-300 font-mono">
+                        +{folder.webArticleSources?.length} Web
+                      </span>
+                    )}
                   </div>
                 </button>
               );
@@ -224,18 +234,35 @@ export const Sidebar: React.FC<SidebarProps> = ({
         )}
       </div>
 
-      {/* Bottom Cross-Source Status Card */}
-      <div className="p-3.5 rounded-xl bg-gradient-to-br from-indigo-950/60 to-slate-900 border border-indigo-500/25 space-y-2">
-        <div className="flex items-center gap-2 text-indigo-300 text-xs font-semibold">
-          <Layers className="w-4 h-4" />
-          <span>Cross-Source Sync Active</span>
+      {/* Bottom Ecosystem Access & Cross-Source Status Card (PRD 4.5) */}
+      <div className="space-y-3">
+        <div className="p-3 rounded-xl bg-slate-950/90 border border-slate-800 space-y-2">
+          <div className="flex items-center justify-between text-[11px] font-mono text-emerald-300">
+            <span>ECOSYSTEM TOUCHPOINTS</span>
+            <span className="px-1.5 py-0.5 rounded bg-emerald-500/15 text-[10px]">
+              Connected
+            </span>
+          </div>
+          <p className="text-[11px] text-slate-400 leading-relaxed">
+            <strong>Chrome Extension:</strong> 1-click web highlighting & clip capture synced to active study folders.
+          </p>
+          <p className="text-[11px] text-slate-400 leading-relaxed">
+            <strong>Mobile Companion Ready:</strong> Responsive layout + keyboard shortcuts (<code className="text-indigo-300">Alt+1..4</code> tabs).
+          </p>
         </div>
-        <p className="text-[11px] text-slate-400 leading-relaxed">
-          PDF slide equations and YouTube transcript timestamps are automatically bridged inside this study space.
-        </p>
-        <div className="flex items-center gap-1.5 text-[10px] text-emerald-400 font-mono">
-          <CheckCircle2 className="w-3.5 h-3.5" />
-          <span>All 5 Complexity Tiers Ready</span>
+
+        <div className="p-3.5 rounded-xl bg-gradient-to-br from-indigo-950/60 to-slate-900 border border-indigo-500/25 space-y-2">
+          <div className="flex items-center gap-2 text-indigo-300 text-xs font-semibold">
+            <Layers className="w-4 h-4" />
+            <span>Grounded Multi-Source Sync</span>
+          </div>
+          <p className="text-[11px] text-slate-400 leading-relaxed">
+            PDFs, YouTube lectures, podcasts, and web articles are indexed with zero-hallucination citations.
+          </p>
+          <div className="flex items-center gap-1.5 text-[10px] text-emerald-400 font-mono">
+            <CheckCircle2 className="w-3.5 h-3.5" />
+            <span>All 5 Complexity Tiers Ready</span>
+          </div>
         </div>
       </div>
     </aside>

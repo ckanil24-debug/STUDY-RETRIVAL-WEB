@@ -161,4 +161,71 @@ export interface StudyFolder {
   multiPdfComparison: MultiPDFComparisonRow[];
   lectureCompanionSync: LectureSyncItem[];
   presetQA: CrossSourceQAPair[];
+  podcastSources?: PodcastSource[];
+  webArticleSources?: WebArticleSource[];
+  anchoredNotes?: AnchoredNote[];
+  synthesisThreads?: SynthesisThread[];
 }
+
+export interface PodcastEpisodeSegment {
+  id: string;
+  timestamp: string;
+  seconds: number;
+  topic: string;
+  transcriptSnippet: string;
+}
+
+export interface PodcastSource {
+  id: string;
+  title: string;
+  showName: string;
+  platform: 'Spotify' | 'Apple Podcasts';
+  duration: string;
+  episodeUrl: string;
+  segments: PodcastEpisodeSegment[];
+  summaryByComplexity: Record<ComplexityLevel, string>;
+}
+
+export interface WebArticleSource {
+  id: string;
+  title: string;
+  domain: string;
+  url: string;
+  author: string;
+  readingTime: string;
+  savedVia: 'Chrome Extension' | 'Web Importer';
+  highlights: string[];
+  summaryByComplexity: Record<ComplexityLevel, string>;
+}
+
+export interface AnchoredNote {
+  id: string;
+  sourceType: 'youtube' | 'pdf' | 'podcast' | 'article';
+  sourceTitle: string;
+  locatorLabel: string; // e.g. "Video @ 11:20", "PDF Page 4", "Podcast @ 14:05", "Article §2"
+  locatorSeconds?: number;
+  locatorPage?: number;
+  highlightQuote: string;
+  userAnnotation: string;
+  tags: string[];
+  createdAt: string;
+}
+
+export interface SynthesisThreadBlock {
+  id: string;
+  sourceBadge: string;
+  sourceType: 'youtube' | 'pdf' | 'podcast' | 'article';
+  locator: string;
+  insightByComplexity: Record<ComplexityLevel, string>;
+}
+
+export interface SynthesisThread {
+  id: string;
+  title: string;
+  category: 'Literature Review' | 'Mini-Course' | 'Project Brief';
+  tags: string[];
+  updatedAt: string;
+  thesisByComplexity: Record<ComplexityLevel, string>;
+  blocks: SynthesisThreadBlock[];
+}
+

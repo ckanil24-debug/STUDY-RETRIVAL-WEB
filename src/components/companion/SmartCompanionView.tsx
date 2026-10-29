@@ -264,11 +264,16 @@ Provide a clear, cross-referenced answer at Complexity Level ${complexity} (${co
               <MessageSquare className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="text-base sm:text-lg font-bold text-white">
-                Cross-Source Q&A (Chat with PDF + YouTube Simultaneously)
-              </h2>
+              <div className="flex items-center gap-2">
+                <h2 className="text-base sm:text-lg font-bold text-white">
+                  Grounded Cross-Source AI Assistant (Chat with Saved Sources)
+                </h2>
+                <span className="text-[10px] font-mono uppercase px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">
+                  Strict Source Grounding • Zero Hallucination
+                </span>
+              </div>
               <p className="text-xs text-slate-400">
-                Ask comparative questions across both formats; answers include dual citations and adapt to the Complexity Slider
+                Operates strictly within your saved PDFs, YouTube lectures, podcasts, and articles with guided prompt unlocks
               </p>
             </div>
           </div>
@@ -393,6 +398,25 @@ Provide a clear, cross-referenced answer at Complexity Level ${complexity} (${co
                     <span>{qa.videoCitation.timestamp}</span>
                   </button>
                 </div>
+              </div>
+
+              {/* Guided Follow-Up Prompt Unlock (PRD 4.3) */}
+              <div className="pt-2 border-t border-slate-900 flex flex-wrap items-center justify-between gap-2 text-xs">
+                <span className="text-[11px] font-mono text-indigo-300 flex items-center gap-1.5">
+                  <Sparkles className="w-3.5 h-3.5" />
+                  <span>Guided Prompt Unlock: Deepen Exploration</span>
+                </span>
+                <button
+                  type="button"
+                  onClick={() =>
+                    handleAskQuestion(
+                      `How does the podcast episode and web article expand on Page ${qa.pdfCitation.page} and timestamp ${qa.videoCitation.timestamp}?`
+                    )
+                  }
+                  className="px-3 py-1 rounded-lg bg-indigo-500/15 hover:bg-indigo-500/25 text-indigo-200 border border-indigo-500/30 text-[11px] font-medium transition"
+                >
+                  Ask Follow-Up: Connect to Podcast & Web Article →
+                </button>
               </div>
             </div>
           ))}

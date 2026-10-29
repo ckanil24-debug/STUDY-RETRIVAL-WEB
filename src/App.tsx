@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Video, FileText, Layers, CheckCircle2 } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Video, FileText, Layers, CheckCircle2, Bookmark } from 'lucide-react';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { AuthView } from './components/auth/AuthView';
 import { Header } from './components/layout/Header';
@@ -7,10 +7,19 @@ import { Sidebar } from './components/layout/Sidebar';
 import { YouTubeSummarizer } from './components/youtube/YouTubeSummarizer';
 import { PDFSummarizer } from './components/pdf/PDFSummarizer';
 import { SmartCompanionView } from './components/companion/SmartCompanionView';
+import { KnowledgeHubView } from './components/notebook/KnowledgeHubView';
 import { INITIAL_STUDY_FOLDERS } from './data/mockStudyFolders';
-import { ComplexityLevel, PDFSource, StudyFolder, YouTubeSource } from './types/study';
+import {
+  AnchoredNote,
+  ComplexityLevel,
+  PDFSource,
+  PodcastSource,
+  StudyFolder,
+  WebArticleSource,
+  YouTubeSource,
+} from './types/study';
 
-type WorkspaceTab = 'youtube' | 'pdf' | 'companion';
+type WorkspaceTab = 'youtube' | 'pdf' | 'companion' | 'notebook';
 
 function extractYouTubeId(url: string): string {
   const regExp =
@@ -32,6 +41,17 @@ const WorkspaceContent: React.FC = () => {
     null
   );
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.altKey && e.key === '1') setActiveTab('youtube');
+      if (e.altKey && e.key === '2') setActiveTab('pdf');
+      if (e.altKey && e.key === '3') setActiveTab('companion');
+      if (e.altKey && e.key === '4') setActiveTab('notebook');
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   if (!user) {
     return <AuthView />;
@@ -223,6 +243,124 @@ const WorkspaceContent: React.FC = () => {
     );
   };
 
+  const handleAddAnchoredNote = (note: AnchoredNote) => {
+    setFolders((prev) =>
+      prev.map((f) =>
+        f.id === activeFolder.id
+          ? { ...f, anchoredNotes: [note, ...(f.anchoredNotes || [])] }
+          : f
+      )
+    );
+    showToast(`Bound note directly to locator "${note.locatorLabel}".`);
+  };
+
+  const handlePinPageAnchor = (pdfName: string, page: number, quote: string) => {
+    const newNote: AnchoredNote = {
+      id: 'note-pin-' + Date.now(),
+      sourceType: 'pdf',
+      sourceTitle: pdfName,
+      locatorLabel: `PDF Page ${page}`,
+      locatorPage: page,
+      highlightQuote: quote,
+      userAnnotation: `Anchored from In-App PDF Viewer on Page ${page} for rapid revision.`,
+      tags: [`#page-${page}`, '#pdf-anchor'],
+      createdAt: 'Just now',
+    };
+    handleAddAnchoredNote(newNote);
+    setActiveTab('notebook');
+  };
+
+  const handleAddTagToNote = (noteId: string, newTag: string) => {
+    setFolders((prev) =>
+      prev.map((f) =>
+        f.id === activeFolder.id
+          ? {
+              ...f,
+              anchoredNotes: (f.anchoredNotes || []).map((n) =>
+                n.id === noteId && !n.tags.includes(newTag)
+                  ? { ...n, tags: [...n.tags, newTag] }
+                  : n
+              ),
+            }
+          : f
+      )
+    );
+    showToast(`Added custom tag ${newTag}`);
+  };
+
+  const handleAddPodcastOrArticle = (
+    type: 'podcast' | 'article',
+    title: string,
+    url: string
+  ) => {
+    if (type === 'podcast') {
+      const newPod: PodcastSource = {
+        id: 'pod-' + Date.now(),
+        title,
+        showName: url.includes('apple') ? 'Apple Podcasts Stream' : 'Spotify Academic Feed',
+        platform: url.includes('apple') ? 'Apple Podcasts' : 'Spotify',
+        duration: '32:10',
+        episodeUrl: url,
+        segments: [
+          {
+            id: 'seg-custom-' + Date.now(),
+            timestamp: '08:15',
+            seconds: 495,
+            topic: 'Core Mechanism & Cross-Source Takeaway',
+            transcriptSnippet:
+              'Key spoken insight extracted from the audio stream and anchored to timestamp 08:15...',
+          },
+        ],
+        summaryByComplexity: {
+          1: `A fun podcast episode (${title}) that explains the main idea using everyday stories!`,
+          2: `Summarizes key interview takeaways from ${title} for quick exam review.`,
+          3: `Synthesizes primary arguments, methodology discussions, and timestamps from ${title}.`,
+          4: `Evaluates technical trade-offs and experimental context discussed in ${title}.`,
+          5: `Critiques domain formalisms and open research questions presented in ${title}.`,
+        },
+      };
+      setFolders((prev) =>
+        prev.map((f) =>
+          f.id === activeFolder.id
+            ? { ...f, podcastSources: [newPod, ...(f.podcastSources || [])] }
+            : f
+        )
+      );
+      showToast(`Pulled podcast episode "${title}" into Smart Notebook.`);
+    } else {
+      const newArt: WebArticleSource = {
+        id: 'art-' + Date.now(),
+        title,
+        domain: 'web-capture.org',
+        url,
+        author: 'Research Contributor',
+        readingTime: '6 min read',
+        savedVia: 'Web Importer',
+        highlights: [
+          `Primary thesis extracted from ${url} and grounded against folder sources.`,
+        ],
+        summaryByComplexity: {
+          1: `This web article (${title}) explains the topic in simple, friendly language!`,
+          2: `Highlights the main facts and examples from ${title} for study prep.`,
+          3: `Connects empirical findings in ${title} to the folder's PDF and video lectures.`,
+          4: `Analyzes methodological nuances and quantitative claims in ${title}.`,
+          5: `Synthesizes theoretical implications and boundary conditions from ${title}.`,
+        },
+      };
+      setFolders((prev) =>
+        prev.map((f) =>
+          f.id === activeFolder.id
+            ? {
+                ...f,
+                webArticleSources: [newArt, ...(f.webArticleSources || [])],
+              }
+            : f
+        )
+      );
+      showToast(`Pulled web article "${title}" into Smart Notebook.`);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col">
       {/* Top Header with User Profile, Logout & Standout 5-Tier Complexity Slider */}
@@ -318,7 +456,20 @@ const WorkspaceContent: React.FC = () => {
                 }`}
               >
                 <Layers className="w-3.5 h-3.5" />
-                <span>Cross-Source Sync & Q&A</span>
+                <span>Grounded Sync & Q&A</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setActiveTab('notebook')}
+                className={`px-3.5 py-2 rounded-xl text-xs font-semibold flex items-center gap-2 transition-all ${
+                  activeTab === 'notebook'
+                    ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/25'
+                    : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
+                }`}
+              >
+                <Bookmark className="w-3.5 h-3.5" />
+                <span>Smart Notebook & Threads</span>
               </button>
             </div>
           </div>
@@ -337,6 +488,7 @@ const WorkspaceContent: React.FC = () => {
               pdfSources={activeFolder.pdfSources}
               multiPdfComparison={activeFolder.multiPdfComparison}
               complexity={complexity}
+              onPinPageAnchor={handlePinPageAnchor}
             />
           )}
 
@@ -345,6 +497,17 @@ const WorkspaceContent: React.FC = () => {
               folder={activeFolder}
               complexity={complexity}
               geminiApiKey={geminiApiKey}
+              onJumpToVideoTimestamp={handleCrossSourceVideoJump}
+            />
+          )}
+
+          {activeTab === 'notebook' && (
+            <KnowledgeHubView
+              folder={activeFolder}
+              complexity={complexity}
+              onAddAnchoredNote={handleAddAnchoredNote}
+              onAddTagToNote={handleAddTagToNote}
+              onAddPodcastOrArticle={handleAddPodcastOrArticle}
               onJumpToVideoTimestamp={handleCrossSourceVideoJump}
             />
           )}
