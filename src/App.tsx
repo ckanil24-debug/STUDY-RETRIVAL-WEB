@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Video, FileText, Layers, CheckCircle2, Bookmark } from 'lucide-react';
+import { Video, FileText, Layers, CheckCircle2, Bookmark, ShieldCheck } from 'lucide-react';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { AuthView } from './components/auth/AuthView';
 import { Header } from './components/layout/Header';
@@ -8,6 +8,7 @@ import { YouTubeSummarizer } from './components/youtube/YouTubeSummarizer';
 import { PDFSummarizer } from './components/pdf/PDFSummarizer';
 import { SmartCompanionView } from './components/companion/SmartCompanionView';
 import { KnowledgeHubView } from './components/notebook/KnowledgeHubView';
+import { EcosystemAndChecklistView } from './components/notebook/EcosystemAndChecklistView';
 import { INITIAL_STUDY_FOLDERS } from './data/mockStudyFolders';
 import {
   AnchoredNote,
@@ -19,7 +20,7 @@ import {
   YouTubeSource,
 } from './types/study';
 
-type WorkspaceTab = 'youtube' | 'pdf' | 'companion' | 'notebook';
+type WorkspaceTab = 'youtube' | 'pdf' | 'companion' | 'notebook' | 'checklist';
 
 function extractYouTubeId(url: string): string {
   const regExp =
@@ -41,6 +42,8 @@ const WorkspaceContent: React.FC = () => {
     null
   );
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [activeLanguage, setActiveLanguage] = useState<string>('EN');
+  const [userPlan, setUserPlan] = useState<'Free' | 'Pro'>('Pro');
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -48,6 +51,7 @@ const WorkspaceContent: React.FC = () => {
       if (e.altKey && e.key === '2') setActiveTab('pdf');
       if (e.altKey && e.key === '3') setActiveTab('companion');
       if (e.altKey && e.key === '4') setActiveTab('notebook');
+      if (e.altKey && e.key === '5') setActiveTab('checklist');
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
@@ -471,6 +475,19 @@ const WorkspaceContent: React.FC = () => {
                 <Bookmark className="w-3.5 h-3.5" />
                 <span>Smart Notebook & Threads</span>
               </button>
+
+              <button
+                type="button"
+                onClick={() => setActiveTab('checklist')}
+                className={`px-3.5 py-2 rounded-xl text-xs font-semibold flex items-center gap-2 transition-all ${
+                  activeTab === 'checklist'
+                    ? 'bg-emerald-500 text-slate-950 shadow-md shadow-emerald-500/25'
+                    : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
+                }`}
+              >
+                <ShieldCheck className="w-3.5 h-3.5" />
+                <span>Ecosystem & PRD Check</span>
+              </button>
             </div>
           </div>
 
@@ -509,6 +526,37 @@ const WorkspaceContent: React.FC = () => {
               onAddTagToNote={handleAddTagToNote}
               onAddPodcastOrArticle={handleAddPodcastOrArticle}
               onJumpToVideoTimestamp={handleCrossSourceVideoJump}
+            />
+          )}
+
+          {activeTab === 'checklist' && (
+            <EcosystemAndChecklistView
+              folder={activeFolder}
+              activeLanguage={activeLanguage}
+              onSelectLanguage={(lang) => {
+                setActiveLanguage(lang);
+                showToast(`Switched study workspace localization mode to ${lang}.`);
+              }}
+              userPlan={userPlan}
+              onTogglePlan={() => {
+                const nextPlan = userPlan === 'Free' ? 'Pro' : 'Free';
+                setUserPlan(nextPlan);
+                showToast(`Switched workspace tier to ${nextPlan} Plan.`);
+              }}
+              onSimulateChromeClip={(title, url, highlight) => {
+                handleAddPodcastOrArticle('article', title, url);
+                handleAddAnchoredNote({
+                  id: 'note-chrome-' + Date.now(),
+                  sourceType: 'article',
+                  sourceTitle: title,
+                  locatorLabel: 'Chrome Web Clip §1',
+                  highlightQuote: highlight,
+                  userAnnotation: `Captured via 1-Click Chrome Browser Extension from ${url}`,
+                  tags: ['#chrome-clip', '#web-highlight'],
+                  createdAt: 'Just now',
+                });
+                setActiveTab('notebook');
+              }}
             />
           )}
         </main>
