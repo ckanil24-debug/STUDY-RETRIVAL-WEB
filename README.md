@@ -33,3 +33,5 @@ A streamlined, secure study application focused on **advanced PDF and YouTube le
 npm install
 npm run dev
 ```
+
+# STUDY-RETRIVAL-WEB
