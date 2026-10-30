@@ -11,8 +11,13 @@ import {
   ArrowUpRight,
   ZoomIn,
   ZoomOut,
-  Eye,
   BookmarkPlus,
+  Columns,
+  Maximize2,
+  ChevronLeft,
+  ChevronRight,
+  Highlighter,
+  SlidersHorizontal,
 } from 'lucide-react';
 import {
   ComplexityLevel,
@@ -28,6 +33,8 @@ interface PDFSummarizerProps {
   onPinPageAnchor?: (pdfName: string, page: number, quote: string) => void;
 }
 
+type LayoutMode = 'split' | 'reader' | 'summary';
+
 export const PDFSummarizer: React.FC<PDFSummarizerProps> = ({
   pdfSources,
   multiPdfComparison,
@@ -39,10 +46,11 @@ export const PDFSummarizer: React.FC<PDFSummarizerProps> = ({
     pdfSources.map((p) => p.id)
   );
   const [showCompareMatrix, setShowCompareMatrix] = useState<boolean>(false);
-  const [showPdfReader, setShowPdfReader] = useState<boolean>(false);
+  const [layoutMode, setLayoutMode] = useState<LayoutMode>('split');
   const [pdfZoom, setPdfZoom] = useState<number>(100);
   const [selectedPage, setSelectedPage] = useState<number>(4);
   const [glossarySearch, setGlossarySearch] = useState<string>('');
+  const [summaryTab, setSummaryTab] = useState<'all' | 'tldr' | 'argument' | 'glossary'>('all');
 
   const activePdf =
     pdfSources.find((p) => p.id === activePdfId) || pdfSources[0];
@@ -71,14 +79,18 @@ export const PDFSummarizer: React.FC<PDFSummarizerProps> = ({
         .includes(glossarySearch.toLowerCase())
   );
 
+  const availablePages = Array.from(
+    new Set([1, 2, 4, 8, 11, activePdf.pageCount])
+  ).sort((a, b) => a - b);
+
   return (
-    <div className="space-y-6">
-      {/* Top PDF Selector & Multi-PDF Cross-Reference Trigger */}
-      <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-4 sm:p-5 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+    <div className="space-y-5">
+      {/* Top Header Bar: Document Switcher & View Mode Controls */}
+      <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 flex flex-col xl:flex-row xl:items-center xl:justify-between gap-4 shadow-lg">
         <div className="space-y-2">
-          <div className="flex items-center gap-2">
-            <span className="text-[11px] font-mono uppercase px-2.5 py-0.5 rounded-full bg-cyan-500/15 text-cyan-300 border border-cyan-500/30">
-              3-Tier Hierarchical PDF Summarizer & Viewer
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-[11px] font-mono uppercase px-2.5 py-0.5 rounded-full bg-cyan-500/15 text-cyan-300 border border-cyan-500/30 font-semibold">
+              Split Model • Standard Academic PDF Reader
             </span>
             <span
               className={`text-[11px] font-semibold px-2.5 py-0.5 rounded-full border ${complexityMeta.badgeColor}`}
@@ -99,14 +111,14 @@ export const PDFSummarizer: React.FC<PDFSummarizerProps> = ({
                     setActivePdfId(pdf.id);
                     setShowCompareMatrix(false);
                   }}
-                  className={`px-3.5 py-2 rounded-xl text-xs font-medium flex items-center gap-2 border transition-all ${
+                  className={`px-3.5 py-1.5 rounded-xl text-xs font-medium flex items-center gap-2 border transition-all ${
                     isCurrent
-                      ? 'bg-indigo-600 text-white border-indigo-400 shadow-md shadow-indigo-500/20'
+                      ? 'bg-indigo-600 text-white border-indigo-400 shadow-md shadow-indigo-500/20 font-semibold'
                       : 'bg-slate-950 hover:bg-slate-800 text-slate-300 border-slate-800'
                   }`}
                 >
                   <FileText className="w-3.5 h-3.5" />
-                  <span className="truncate max-w-[230px]">{pdf.filename}</span>
+                  <span className="truncate max-w-[200px]">{pdf.filename}</span>
                   <span className="text-[10px] font-mono opacity-75">
                     ({pdf.pageCount}p)
                   </span>
@@ -116,29 +128,59 @@ export const PDFSummarizer: React.FC<PDFSummarizerProps> = ({
           </div>
         </div>
 
-        {/* Right Controls: In-App PDF Viewer Toggle + Multi-PDF Matrix Toggle */}
+        {/* Right Action Controls: Split Model Switcher + Matrix Toggle */}
         <div className="flex flex-wrap items-center gap-2.5 shrink-0">
-          <button
-            type="button"
-            onClick={() => {
-              setShowPdfReader(!showPdfReader);
-              setShowCompareMatrix(false);
-            }}
-            className={`px-3.5 py-2.5 rounded-xl font-semibold text-xs flex items-center gap-2 border transition-all ${
-              showPdfReader
-                ? 'bg-indigo-600 text-white border-indigo-400 shadow-lg shadow-indigo-500/20'
-                : 'bg-slate-950 hover:bg-slate-800 text-slate-200 border-slate-800'
-            }`}
-          >
-            <Eye className="w-4 h-4 text-indigo-400" />
-            <span>{showPdfReader ? 'Hide In-App PDF Reader' : 'Open In-App PDF Viewer'}</span>
-          </button>
+          {!showCompareMatrix && (
+            <div className="flex items-center bg-slate-950 border border-slate-800 rounded-xl p-1 gap-1">
+              <button
+                type="button"
+                onClick={() => setLayoutMode('split')}
+                title="Split Model (Side-by-Side: PDF + AI Summaries)"
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition ${
+                  layoutMode === 'split'
+                    ? 'bg-indigo-600 text-white shadow-sm'
+                    : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                <Columns className="w-3.5 h-3.5" />
+                <span>Split Model</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setLayoutMode('reader')}
+                title="Full-Screen Standard PDF Reader"
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition ${
+                  layoutMode === 'reader'
+                    ? 'bg-indigo-600 text-white shadow-sm'
+                    : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                <Maximize2 className="w-3.5 h-3.5" />
+                <span>Standard Reader</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setLayoutMode('summary')}
+                title="Summary & Argument Map Focus"
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition ${
+                  layoutMode === 'summary'
+                    ? 'bg-indigo-600 text-white shadow-sm'
+                    : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                <SlidersHorizontal className="w-3.5 h-3.5" />
+                <span>Summaries Only</span>
+              </button>
+            </div>
+          )}
 
           {pdfSources.length > 1 && (
             <button
               type="button"
               onClick={() => setShowCompareMatrix(!showCompareMatrix)}
-              className={`px-4 py-2.5 rounded-xl font-semibold text-xs flex items-center gap-2 border transition-all ${
+              className={`px-3.5 py-2 rounded-xl font-semibold text-xs flex items-center gap-2 border transition-all ${
                 showCompareMatrix
                   ? 'bg-cyan-500 text-slate-950 border-cyan-400 shadow-lg shadow-cyan-500/20'
                   : 'bg-cyan-500/15 hover:bg-cyan-500/25 text-cyan-300 border-cyan-500/30'
@@ -147,7 +189,7 @@ export const PDFSummarizer: React.FC<PDFSummarizerProps> = ({
               <Scale className="w-4 h-4" />
               <span>
                 {showCompareMatrix
-                  ? 'Back to Single-PDF 3-Tier View'
+                  ? 'Back to Standard Split View'
                   : `Compare ${pdfSources.length} PDFs (Matrix)`}
               </span>
             </button>
@@ -155,122 +197,7 @@ export const PDFSummarizer: React.FC<PDFSummarizerProps> = ({
         </div>
       </div>
 
-      {/* Optional In-App PDF Viewer with Smooth Scrolling & Zoom Controls (PRD 4.1) */}
-      {showPdfReader && !showCompareMatrix && (
-        <div className="rounded-2xl bg-slate-900/95 border border-indigo-500/40 p-4 sm:p-5 space-y-4 shadow-2xl">
-          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 pb-3">
-            <div className="flex items-center gap-2.5">
-              <FileText className="w-4 h-4 text-indigo-400" />
-              <span className="text-xs sm:text-sm font-bold text-white font-mono">
-                {activePdf.filename}
-              </span>
-              <span className="text-[11px] font-mono px-2 py-0.5 rounded bg-slate-800 text-slate-300">
-                Page {selectedPage} of {activePdf.pageCount}
-              </span>
-            </div>
-
-            {/* Smooth Zoom & Page Controls */}
-            <div className="flex items-center gap-2">
-              <div className="flex items-center gap-1 bg-slate-950 border border-slate-800 rounded-xl px-2 py-1">
-                <button
-                  type="button"
-                  onClick={() => setPdfZoom((z) => Math.max(75, z - 15))}
-                  className="p-1 text-slate-400 hover:text-white"
-                  title="Zoom Out"
-                >
-                  <ZoomOut className="w-3.5 h-3.5" />
-                </button>
-                <span className="text-xs font-mono text-indigo-300 px-2">
-                  {pdfZoom}%
-                </span>
-                <button
-                  type="button"
-                  onClick={() => setPdfZoom((z) => Math.min(160, z + 15))}
-                  className="p-1 text-slate-400 hover:text-white"
-                  title="Zoom In"
-                >
-                  <ZoomIn className="w-3.5 h-3.5" />
-                </button>
-              </div>
-
-              <div className="flex items-center gap-1">
-                {[2, 4, 8, 11].map((pg) => (
-                  <button
-                    key={pg}
-                    type="button"
-                    onClick={() => setSelectedPage(pg)}
-                    className={`px-2.5 py-1 rounded-lg text-xs font-mono transition ${
-                      selectedPage === pg
-                        ? 'bg-indigo-600 text-white font-bold'
-                        : 'bg-slate-950 text-slate-400 hover:text-white border border-slate-800'
-                    }`}
-                  >
-                    p.{pg}
-                  </button>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          {/* Scrollable Manuscript Canvas */}
-          <div className="max-h-80 overflow-y-auto rounded-xl bg-slate-950 border border-slate-800 p-6 space-y-5 scroll-smooth">
-            <div
-              style={{ fontSize: `${pdfZoom}%` }}
-              className="max-w-3xl mx-auto space-y-4 text-slate-200 leading-relaxed transition-all"
-            >
-              <div className="flex items-center justify-between text-xs font-mono text-slate-500 border-b border-slate-800/80 pb-2">
-                <span>{activePdf.authors} ({activePdf.publicationYear})</span>
-                <span>MANUSCRIPT PAGE {selectedPage}</span>
-              </div>
-
-              {activePdf.summary.argumentMap.map((node) => (
-                <div
-                  key={node.id}
-                  onClick={() => setSelectedPage(node.pageRef)}
-                  className={`p-4 rounded-xl border transition cursor-pointer ${
-                    selectedPage === node.pageRef
-                      ? 'bg-indigo-950/30 border-indigo-500/50'
-                      : 'bg-slate-900/50 border-slate-800/70'
-                  }`}
-                >
-                  <div className="flex items-center justify-between mb-1.5">
-                    <span className="text-xs font-mono font-bold text-indigo-300">
-                      § Page {node.pageRef} — {node.heading}
-                    </span>
-                    {onPinPageAnchor && (
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onPinPageAnchor(
-                            activePdf.filename,
-                            node.pageRef,
-                            node.formulaOrHighlight || node.heading
-                          );
-                        }}
-                        className="px-2.5 py-1 rounded-lg bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 border border-emerald-500/30 text-[11px] font-sans font-semibold flex items-center gap-1"
-                      >
-                        <BookmarkPlus className="w-3 h-3" />
-                        <span>Anchor Highlight (p.{node.pageRef})</span>
-                      </button>
-                    )}
-                  </div>
-                  {node.formulaOrHighlight && (
-                    <div className="my-2 px-3 py-2 rounded bg-slate-950 border border-amber-500/30 font-mono text-amber-300 text-xs">
-                      {node.formulaOrHighlight}
-                    </div>
-                  )}
-                  <p className="text-slate-300 text-sm">
-                    {node.contentByComplexity[complexity]}
-                  </p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* View Mode A: Multi-PDF Cross-Referencing Matrix */}
+      {/* VIEW MODE A: MULTI-PDF CROSS-REFERENCE MATRIX */}
       {showCompareMatrix && pdfSources.length > 1 ? (
         <div className="rounded-2xl bg-slate-900/90 border border-cyan-500/40 p-5 sm:p-6 space-y-5 complexity-transition">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-800 pb-4">
@@ -284,7 +211,6 @@ export const PDFSummarizer: React.FC<PDFSummarizerProps> = ({
               </p>
             </div>
 
-            {/* Checkboxes to Select PDFs for Cross-Referencing */}
             <div className="flex flex-wrap gap-2">
               {pdfSources.map((pdf) => {
                 const checked = selectedForCompare.includes(pdf.id);
@@ -311,7 +237,6 @@ export const PDFSummarizer: React.FC<PDFSummarizerProps> = ({
             </div>
           </div>
 
-          {/* Comparison Table */}
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
@@ -370,177 +295,375 @@ export const PDFSummarizer: React.FC<PDFSummarizerProps> = ({
           </div>
         </div>
       ) : (
-        /* View Mode B: Single PDF 3-Tier Hierarchical Breakdown */
+        /* VIEW MODE B: STANDARD SPLIT SCREEN MODEL (Side-by-Side PDF Reader + 3-Tier Summaries) */
         <div
-          key={`${activePdf.id}-${complexity}`}
-          className="space-y-6 complexity-transition"
+          className={`grid gap-6 transition-all ${
+            layoutMode === 'split'
+              ? 'grid-cols-1 lg:grid-cols-12'
+              : 'grid-cols-1'
+          }`}
         >
-          {/* TIER 1: TL;DR / Executive Summary (3 Sentences Capturing Core Thesis) */}
-          <section className="rounded-2xl bg-gradient-to-br from-indigo-950/50 via-slate-900 to-slate-900 border border-indigo-500/40 p-5 sm:p-6 shadow-lg">
-            <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
-              <div className="flex items-center gap-2.5">
-                <span className="px-2.5 py-1 rounded-lg bg-indigo-500/20 border border-indigo-500/40 text-indigo-300 font-mono text-xs font-bold">
-                  TIER 1
-                </span>
-                <h3 className="text-base sm:text-lg font-bold text-white flex items-center gap-2">
-                  <Sparkles className="w-4 h-4 text-indigo-400" />
-                  <span>TL;DR / Executive Summary (3-Sentence Core Thesis)</span>
-                </h3>
-              </div>
-              <span className="text-xs font-mono text-slate-400">
-                {activePdf.authors} ({activePdf.publicationYear})
-              </span>
-            </div>
-
-            <p className="text-sm sm:text-base text-slate-100 leading-relaxed bg-slate-950/70 border border-slate-800/90 rounded-xl p-4">
-              {activePdf.summary.tldr[complexity]}
-            </p>
-          </section>
-
-          {/* TIER 2 & TIER 3 Split Grid */}
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-            {/* TIER 2: Core Argument Map (7 Cols) */}
-            <section className="lg:col-span-7 rounded-2xl bg-slate-900/80 border border-slate-800 p-5 space-y-4">
-              <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-                <div className="flex items-center gap-2.5">
-                  <span className="px-2.5 py-1 rounded-lg bg-cyan-500/20 border border-cyan-500/40 text-cyan-300 font-mono text-xs font-bold">
-                    TIER 2
-                  </span>
-                  <div>
-                    <h3 className="text-base font-bold text-white flex items-center gap-2">
-                      <GitBranch className="w-4 h-4 text-cyan-400" />
-                      <span>Core Argument Map</span>
-                    </h3>
-                    <p className="text-xs text-slate-400">
-                      Methodologies, key findings, and theorem proofs with page citations
+          {/* LEFT PANE: STANDARD-SIZE ACADEMIC PDF DOCUMENT VIEWER (Full Standard Height & A4 Proportions) */}
+          {(layoutMode === 'split' || layoutMode === 'reader') && (
+            <div
+              className={`rounded-2xl bg-slate-900/95 border border-indigo-500/30 shadow-2xl flex flex-col overflow-hidden ${
+                layoutMode === 'split' ? 'lg:col-span-7 h-[780px]' : 'w-full h-[850px]'
+              }`}
+            >
+              {/* Document Reader Toolbar */}
+              <div className="p-3 bg-slate-950 border-b border-slate-800 flex flex-wrap items-center justify-between gap-2.5">
+                <div className="flex items-center gap-2 min-w-0">
+                  <div className="p-1.5 rounded-lg bg-indigo-500/15 text-indigo-400 shrink-0">
+                    <FileText className="w-4 h-4" />
+                  </div>
+                  <div className="min-w-0">
+                    <h4 className="text-xs font-bold text-white font-mono truncate max-w-[260px] sm:max-w-[340px]">
+                      {activePdf.filename}
+                    </h4>
+                    <p className="text-[10px] text-slate-400 font-mono">
+                      Page {selectedPage} of {activePdf.pageCount} • Standard Academic Layout
                     </p>
+                  </div>
+                </div>
+
+                {/* Reader Controls: Page Stepper, Direct Jump & Standard Zoom */}
+                <div className="flex items-center gap-2">
+                  {/* Prev / Next Page Buttons */}
+                  <div className="flex items-center bg-slate-900 border border-slate-800 rounded-lg p-0.5">
+                    <button
+                      type="button"
+                      disabled={selectedPage <= 1}
+                      onClick={() => setSelectedPage((p) => Math.max(1, p - 1))}
+                      className="p-1 rounded text-slate-400 hover:text-white disabled:opacity-40"
+                      title="Previous Page"
+                    >
+                      <ChevronLeft className="w-3.5 h-3.5" />
+                    </button>
+                    <span className="text-xs font-mono px-2 text-indigo-300 font-semibold">
+                      p.{selectedPage}
+                    </span>
+                    <button
+                      type="button"
+                      disabled={selectedPage >= activePdf.pageCount}
+                      onClick={() => setSelectedPage((p) => Math.min(activePdf.pageCount, p + 1))}
+                      className="p-1 rounded text-slate-400 hover:text-white disabled:opacity-40"
+                      title="Next Page"
+                    >
+                      <ChevronRight className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+
+                  {/* Zoom Controls */}
+                  <div className="flex items-center bg-slate-900 border border-slate-800 rounded-lg px-2 py-0.5 text-xs font-mono">
+                    <button
+                      type="button"
+                      onClick={() => setPdfZoom((z) => Math.max(75, z - 15))}
+                      className="p-1 text-slate-400 hover:text-white"
+                      title="Zoom Out"
+                    >
+                      <ZoomOut className="w-3 h-3" />
+                    </button>
+                    <span className="text-[11px] text-slate-300 px-1.5">{pdfZoom}%</span>
+                    <button
+                      type="button"
+                      onClick={() => setPdfZoom((z) => Math.min(160, z + 15))}
+                      className="p-1 text-slate-400 hover:text-white"
+                      title="Zoom In"
+                    >
+                      <ZoomIn className="w-3 h-3" />
+                    </button>
+                  </div>
+
+                  {/* Quick Page Jump Pills */}
+                  <div className="hidden sm:flex items-center gap-1">
+                    {availablePages.slice(0, 4).map((pg) => (
+                      <button
+                        key={pg}
+                        type="button"
+                        onClick={() => setSelectedPage(pg)}
+                        className={`px-2 py-0.5 rounded text-[11px] font-mono transition ${
+                          selectedPage === pg
+                            ? 'bg-indigo-600 text-white font-bold'
+                            : 'bg-slate-900 text-slate-400 hover:text-white border border-slate-800'
+                        }`}
+                      >
+                        {pg}
+                      </button>
+                    ))}
                   </div>
                 </div>
               </div>
 
-              <div className="space-y-4">
-                {activePdf.summary.argumentMap.map((node, index) => (
-                  <div
-                    key={node.id}
-                    className="rounded-xl bg-slate-950/90 border border-slate-800/90 p-4 space-y-2.5 hover:border-slate-700 transition"
-                  >
-                    <div className="flex flex-wrap items-center justify-between gap-2">
-                      <div className="flex items-center gap-2">
-                        <span className="w-6 h-6 rounded-lg bg-indigo-500/15 border border-indigo-500/30 text-indigo-300 font-mono text-xs font-bold flex items-center justify-center">
-                          {index + 1}
-                        </span>
-                        <span className="text-[11px] font-mono uppercase px-2 py-0.5 rounded bg-slate-800 text-cyan-300">
-                          {node.category}
-                        </span>
-                        <h4 className="text-sm font-bold text-white">{node.heading}</h4>
-                      </div>
+              {/* Document Canvas Body: Real A4 Standard Proportions with Paper Styling */}
+              <div className="flex-1 overflow-y-auto bg-slate-950/90 p-4 sm:p-6 flex justify-center scroll-smooth">
+                <div
+                  style={{ transform: `scale(${pdfZoom / 100})`, transformOrigin: 'top center' }}
+                  className="w-full max-w-[650px] min-h-[920px] bg-slate-900 border border-slate-800 rounded-xl shadow-2xl p-6 sm:p-8 space-y-6 text-slate-200 transition-transform duration-150"
+                >
+                  {/* Academic Document Header / Running Title */}
+                  <div className="border-b border-slate-800 pb-3 flex items-center justify-between text-[11px] font-mono text-slate-400">
+                    <span>{activePdf.authors} ({activePdf.publicationYear})</span>
+                    <span className="text-indigo-400 font-semibold uppercase">
+                      Page {selectedPage} of {activePdf.pageCount}
+                    </span>
+                  </div>
 
-                      <div className="flex items-center gap-1.5">
+                  {/* Document Title Banner */}
+                  <div className="space-y-1.5 pt-1">
+                    <span className="text-[10px] font-mono uppercase px-2 py-0.5 rounded bg-indigo-500/15 text-indigo-300 border border-indigo-500/25">
+                      Peer-Reviewed Academic Publication
+                    </span>
+                    <h2 className="text-base sm:text-lg font-bold text-white tracking-tight leading-snug">
+                      {activePdf.filename.replace('.pdf', '').replace(/_/g, ' ')}
+                    </h2>
+                    <p className="text-xs text-slate-400 italic">
+                      {activePdf.authors} • Published in Journal of Bioenergetics & Systems Modeling
+                    </p>
+                  </div>
+
+                  {/* Simulated A4 Manuscript Sections for Selected Page */}
+                  <div className="space-y-5 text-xs sm:text-sm leading-relaxed text-slate-300">
+                    <div className="p-3.5 rounded-xl bg-slate-950/70 border border-slate-800 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[11px] font-mono uppercase text-indigo-300 font-bold flex items-center gap-1.5">
+                          <Highlighter className="w-3.5 h-3.5" />
+                          <span>Manuscript Excerpt — Page {selectedPage}</span>
+                        </span>
                         {onPinPageAnchor && (
                           <button
                             type="button"
                             onClick={() =>
                               onPinPageAnchor(
                                 activePdf.filename,
-                                node.pageRef,
-                                node.formulaOrHighlight || node.heading
+                                selectedPage,
+                                activePdf.summary.argumentMap.find((a) => a.pageRef === selectedPage)?.formulaOrHighlight ||
+                                  `Section discussion on page ${selectedPage}`
                               )
                             }
-                            className="px-2 py-0.5 rounded-md bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 border border-emerald-500/30 text-[11px] font-medium flex items-center gap-1"
-                            title="Bind highlight to Page Locator"
+                            className="px-2 py-0.5 rounded bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 border border-emerald-500/30 text-[10px] font-semibold flex items-center gap-1"
                           >
                             <BookmarkPlus className="w-3 h-3" />
-                            <span>Pin Note</span>
+                            <span>Anchor Page {selectedPage} Note</span>
                           </button>
                         )}
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setSelectedPage(node.pageRef);
-                            setShowPdfReader(true);
-                          }}
-                          className="px-2.5 py-0.5 rounded-md bg-indigo-500/15 hover:bg-indigo-500/25 text-indigo-300 border border-indigo-500/30 font-mono text-xs font-semibold flex items-center gap-1"
-                        >
-                          <span>Page {node.pageRef}</span>
-                          <ArrowUpRight className="w-3 h-3" />
-                        </button>
                       </div>
+                      <p className="text-slate-300 leading-relaxed font-serif text-[13px]">
+                        {activePdf.summary.tldr[complexity]}
+                      </p>
                     </div>
 
-                    {node.formulaOrHighlight && (
-                      <div className="px-3 py-2 rounded-lg bg-slate-900 border border-slate-800 font-mono text-xs text-amber-300">
-                        {node.formulaOrHighlight}
-                      </div>
-                    )}
+                    {/* Section Headings & Formulas on this Page */}
+                    <div className="space-y-4">
+                      {activePdf.summary.argumentMap.map((arg, idx) => (
+                        <div
+                          key={arg.id}
+                          className={`p-4 rounded-xl border transition-all ${
+                            selectedPage === arg.pageRef
+                              ? 'bg-indigo-950/30 border-indigo-500/60 shadow-md ring-1 ring-indigo-500/40'
+                              : 'bg-slate-950/40 border-slate-800/80 hover:border-slate-700'
+                          }`}
+                        >
+                          <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
+                            <span className="font-mono text-xs font-bold text-white flex items-center gap-1.5">
+                              <span className="text-indigo-400">§ {idx + 1}.0</span>
+                              <span>{arg.heading}</span>
+                            </span>
+                            <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-slate-800 text-cyan-300">
+                              Page {arg.pageRef}
+                            </span>
+                          </div>
 
-                    <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
-                      {node.contentByComplexity[complexity]}
-                    </p>
-                  </div>
-                ))}
-              </div>
-            </section>
+                          {arg.formulaOrHighlight && (
+                            <div className="my-2.5 p-3 rounded-lg bg-slate-950 border border-amber-500/30 font-mono text-amber-300 text-xs shadow-inner flex items-center justify-between">
+                              <span>{arg.formulaOrHighlight}</span>
+                              <span className="text-[10px] text-slate-500">Eq. ({idx + 1})</span>
+                            </div>
+                          )}
 
-            {/* TIER 3: Glossary & Terminology (5 Cols) */}
-            <section className="lg:col-span-5 rounded-2xl bg-slate-900/80 border border-slate-800 p-5 space-y-4">
-              <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-                <div className="flex items-center gap-2.5">
-                  <span className="px-2.5 py-1 rounded-lg bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 font-mono text-xs font-bold">
-                    TIER 3
-                  </span>
-                  <div>
-                    <h3 className="text-base font-bold text-white flex items-center gap-2">
-                      <BookOpen className="w-4 h-4 text-emerald-400" />
-                      <span>Glossary & Terminology</span>
-                    </h3>
-                    <p className="text-xs text-slate-400">
-                      Context-aware definitions calibrated to Tier {complexity}
-                    </p>
+                          <p className="text-slate-300 text-xs sm:text-[13px] leading-relaxed">
+                            {arg.contentByComplexity[complexity]}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Page Footer */}
+                    <div className="pt-4 border-t border-slate-800/80 flex items-center justify-between text-[11px] font-mono text-slate-500">
+                      <span>StudyRetrieval Grounded Document Engine</span>
+                      <span>Page {selectedPage} of {activePdf.pageCount}</span>
+                    </div>
                   </div>
                 </div>
               </div>
+            </div>
+          )}
 
-              {/* Filter Input */}
-              <div className="relative">
-                <Search className="w-3.5 h-3.5 text-slate-500 absolute left-3 top-2.5" />
-                <input
-                  type="text"
-                  value={glossarySearch}
-                  onChange={(e) => setGlossarySearch(e.target.value)}
-                  placeholder="Filter extracted terminology..."
-                  className="w-full pl-9 pr-3 py-1.5 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500"
-                />
+          {/* RIGHT PANE: 3-TIER HIERARCHICAL SUMMARIES & ARGUMENT MATRIX */}
+          {(layoutMode === 'split' || layoutMode === 'summary') && (
+            <div
+              className={`space-y-5 overflow-y-auto ${
+                layoutMode === 'split' ? 'lg:col-span-5 h-[780px] pr-1' : 'w-full'
+              }`}
+            >
+              {/* Internal Tab Filter for Right Pane */}
+              <div className="flex items-center justify-between bg-slate-900 border border-slate-800 p-1.5 rounded-xl">
+                <span className="text-xs font-bold uppercase tracking-wider text-slate-300 px-2 flex items-center gap-1.5">
+                  <Sparkles className="w-3.5 h-3.5 text-indigo-400" />
+                  <span>3-Tier AI Breakdown</span>
+                </span>
+                <div className="flex items-center gap-1">
+                  {(['all', 'tldr', 'argument', 'glossary'] as const).map((tab) => (
+                    <button
+                      key={tab}
+                      type="button"
+                      onClick={() => setSummaryTab(tab)}
+                      className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold uppercase transition ${
+                        summaryTab === tab
+                          ? 'bg-indigo-600 text-white shadow-sm'
+                          : 'text-slate-400 hover:text-white'
+                      }`}
+                    >
+                      {tab === 'all' ? 'All Tiers' : tab}
+                    </button>
+                  ))}
+                </div>
               </div>
 
-              <div className="space-y-3">
-                {filteredGlossary.map((item, idx) => (
-                  <div
-                    key={idx}
-                    className="p-3.5 rounded-xl bg-slate-950/90 border border-slate-800/90 space-y-1.5"
-                  >
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="text-xs sm:text-sm font-bold text-emerald-300">
-                        {item.term}
+              {/* TIER 1: TL;DR / Executive Summary (3 Sentences) */}
+              {(summaryTab === 'all' || summaryTab === 'tldr') && (
+                <section className="rounded-2xl bg-gradient-to-br from-indigo-950/60 via-slate-900 to-slate-900 border border-indigo-500/40 p-4 sm:p-5 shadow-lg complexity-transition">
+                  <div className="flex items-center justify-between mb-2.5">
+                    <div className="flex items-center gap-2">
+                      <span className="px-2 py-0.5 rounded bg-indigo-500/20 text-indigo-300 font-mono text-[10px] font-bold">
+                        TIER 1
                       </span>
-                      <span className="text-[11px] font-mono text-slate-400 bg-slate-900 px-2 py-0.5 rounded border border-slate-800 shrink-0">
-                        p. {item.pageRef}
-                      </span>
+                      <h3 className="text-xs sm:text-sm font-bold text-white flex items-center gap-1.5">
+                        <Sparkles className="w-3.5 h-3.5 text-indigo-400" />
+                        <span>TL;DR (3-Sentence Core Thesis)</span>
+                      </h3>
                     </div>
-
-                    {item.symbolOrTag && (
-                      <div className="text-[11px] font-mono text-indigo-300">
-                        Notation: {item.symbolOrTag}
-                      </div>
-                    )}
-
-                    <p className="text-xs text-slate-300 leading-relaxed pt-1">
-                      {item.definitionByComplexity[complexity]}
-                    </p>
+                    <span className="text-[10px] font-mono text-slate-400">
+                      {activePdf.authors}
+                    </span>
                   </div>
-                ))}
-              </div>
-            </section>
-          </div>
+
+                  <p className="text-xs sm:text-sm text-slate-200 leading-relaxed bg-slate-950/70 border border-slate-800/80 rounded-xl p-3.5">
+                    {activePdf.summary.tldr[complexity]}
+                  </p>
+                </section>
+              )}
+
+              {/* TIER 2: Core Argument Map with Page Links */}
+              {(summaryTab === 'all' || summaryTab === 'argument') && (
+                <section className="rounded-2xl bg-slate-900/80 border border-slate-800 p-4 sm:p-5 space-y-3 complexity-transition">
+                  <div className="flex items-center justify-between border-b border-slate-800 pb-2.5">
+                    <div className="flex items-center gap-2">
+                      <span className="px-2 py-0.5 rounded bg-cyan-500/20 text-cyan-300 font-mono text-[10px] font-bold">
+                        TIER 2
+                      </span>
+                      <h3 className="text-xs sm:text-sm font-bold text-white flex items-center gap-1.5">
+                        <GitBranch className="w-3.5 h-3.5 text-cyan-400" />
+                        <span>Core Argument Map</span>
+                      </h3>
+                    </div>
+                    <span className="text-[10px] text-slate-400">Click Page to Seek Reader</span>
+                  </div>
+
+                  <div className="space-y-3">
+                    {activePdf.summary.argumentMap.map((node, index) => (
+                      <div
+                        key={node.id}
+                        className="rounded-xl bg-slate-950 border border-slate-800/90 p-3.5 space-y-2 hover:border-slate-700 transition"
+                      >
+                        <div className="flex flex-wrap items-center justify-between gap-1.5">
+                          <div className="flex items-center gap-1.5">
+                            <span className="w-5 h-5 rounded bg-indigo-500/15 text-indigo-300 font-mono text-[11px] font-bold flex items-center justify-center">
+                              {index + 1}
+                            </span>
+                            <span className="text-[10px] font-mono uppercase px-1.5 py-0.5 rounded bg-slate-800 text-cyan-300">
+                              {node.category}
+                            </span>
+                            <h4 className="text-xs font-bold text-white">{node.heading}</h4>
+                          </div>
+
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setSelectedPage(node.pageRef);
+                              if (layoutMode === 'summary') setLayoutMode('split');
+                            }}
+                            className="px-2 py-0.5 rounded bg-indigo-500/15 hover:bg-indigo-500/25 text-indigo-300 border border-indigo-500/30 font-mono text-[11px] font-semibold flex items-center gap-1"
+                          >
+                            <span>Page {node.pageRef}</span>
+                            <ArrowUpRight className="w-3 h-3" />
+                          </button>
+                        </div>
+
+                        {node.formulaOrHighlight && (
+                          <div className="px-2.5 py-1.5 rounded bg-slate-900 border border-slate-800 font-mono text-xs text-amber-300">
+                            {node.formulaOrHighlight}
+                          </div>
+                        )}
+
+                        <p className="text-xs text-slate-300 leading-relaxed">
+                          {node.contentByComplexity[complexity]}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                </section>
+              )}
+
+              {/* TIER 3: Context-Aware Glossary & Terminology */}
+              {(summaryTab === 'all' || summaryTab === 'glossary') && (
+                <section className="rounded-2xl bg-slate-900/80 border border-slate-800 p-4 sm:p-5 space-y-3 complexity-transition">
+                  <div className="flex items-center justify-between border-b border-slate-800 pb-2.5">
+                    <div className="flex items-center gap-2">
+                      <span className="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-mono text-[10px] font-bold">
+                        TIER 3
+                      </span>
+                      <h3 className="text-xs sm:text-sm font-bold text-white flex items-center gap-1.5">
+                        <BookOpen className="w-3.5 h-3.5 text-emerald-400" />
+                        <span>Glossary & Terminology</span>
+                      </h3>
+                    </div>
+                  </div>
+
+                  <div className="relative">
+                    <Search className="w-3 h-3 text-slate-500 absolute left-2.5 top-2.5" />
+                    <input
+                      type="text"
+                      value={glossarySearch}
+                      onChange={(e) => setGlossarySearch(e.target.value)}
+                      placeholder="Search terms..."
+                      className="w-full pl-8 pr-3 py-1 bg-slate-950 border border-slate-800 rounded-lg text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    {filteredGlossary.map((item, idx) => (
+                      <div
+                        key={idx}
+                        className="p-3 rounded-xl bg-slate-950 border border-slate-800/80 space-y-1"
+                      >
+                        <div className="flex items-center justify-between gap-1.5">
+                          <span className="text-xs font-bold text-emerald-300">
+                            {item.term}
+                          </span>
+                          <span className="text-[10px] font-mono text-slate-400 bg-slate-900 px-1.5 py-0.5 rounded border border-slate-800">
+                            p. {item.pageRef}
+                          </span>
+                        </div>
+                        <p className="text-xs text-slate-300 leading-relaxed">
+                          {item.definitionByComplexity[complexity]}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                </section>
+              )}
+            </div>
+          )}
         </div>
       )}
     </div>
