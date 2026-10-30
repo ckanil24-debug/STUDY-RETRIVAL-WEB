@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   FileText,
   BookOpen,
@@ -18,6 +18,11 @@ import {
   ChevronRight,
   Highlighter,
   SlidersHorizontal,
+  Upload,
+  Sun,
+  Moon,
+  ExternalLink,
+  Layers,
 } from 'lucide-react';
 import {
   ComplexityLevel,
@@ -30,18 +35,27 @@ interface PDFSummarizerProps {
   pdfSources: PDFSource[];
   multiPdfComparison: MultiPDFComparisonRow[];
   complexity: ComplexityLevel;
+  selectedPdfId?: string;
+  onSelectPdf?: (id: string) => void;
   onPinPageAnchor?: (pdfName: string, page: number, quote: string) => void;
+  onUploadPdfFile?: (file: File) => void;
 }
 
 type LayoutMode = 'split' | 'reader' | 'summary';
+type PaperTheme = 'light' | 'dark' | 'sepia';
 
 export const PDFSummarizer: React.FC<PDFSummarizerProps> = ({
   pdfSources,
   multiPdfComparison,
   complexity,
+  selectedPdfId,
+  onSelectPdf,
   onPinPageAnchor,
+  onUploadPdfFile,
 }) => {
-  const [activePdfId, setActivePdfId] = useState<string>(pdfSources[0]?.id || '');
+  const [activePdfId, setActivePdfId] = useState<string>(
+    selectedPdfId || pdfSources[0]?.id || ''
+  );
   const [selectedForCompare, setSelectedForCompare] = useState<string[]>(
     pdfSources.map((p) => p.id)
   );
@@ -51,6 +65,20 @@ export const PDFSummarizer: React.FC<PDFSummarizerProps> = ({
   const [selectedPage, setSelectedPage] = useState<number>(4);
   const [glossarySearch, setGlossarySearch] = useState<string>('');
   const [summaryTab, setSummaryTab] = useState<'all' | 'tldr' | 'argument' | 'glossary'>('all');
+  const [paperTheme, setPaperTheme] = useState<PaperTheme>('light');
+  const [viewModeType, setViewModeType] = useState<'sheet' | 'embed'>('sheet');
+
+  useEffect(() => {
+    if (selectedPdfId && selectedPdfId !== activePdfId) {
+      setActivePdfId(selectedPdfId);
+    }
+  }, [selectedPdfId]);
+
+  useEffect(() => {
+    if (pdfSources.length > 0 && !pdfSources.some((p) => p.id === activePdfId)) {
+      setActivePdfId(pdfSources[0].id);
+    }
+  }, [pdfSources, activePdfId]);
 
   const activePdf =
     pdfSources.find((p) => p.id === activePdfId) || pdfSources[0];
@@ -63,10 +91,31 @@ export const PDFSummarizer: React.FC<PDFSummarizerProps> = ({
     );
   };
 
+  const handleSelectActivePdf = (id: string) => {
+    setActivePdfId(id);
+    setShowCompareMatrix(false);
+    if (onSelectPdf) onSelectPdf(id);
+  };
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file && onUploadPdfFile) {
+      onUploadPdfFile(file);
+      e.target.value = '';
+    }
+  };
+
   if (!activePdf) {
     return (
-      <div className="p-8 text-center text-slate-400">
-        No PDF documents uploaded in this folder yet.
+      <div className="p-12 text-center text-slate-400 rounded-2xl bg-slate-900 border border-slate-800 space-y-3">
+        <FileText className="w-10 h-10 text-cyan-400 mx-auto opacity-70" />
+        <h3 className="text-base font-bold text-white">No PDF Documents Loaded</h3>
+        <p className="text-xs text-slate-400">Upload an academic PDF file to begin reading and summarizing.</p>
+        <label className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-indigo-600 text-white font-semibold text-xs cursor-pointer hover:bg-indigo-500 transition">
+          <Upload className="w-3.5 h-3.5" />
+          <span>Upload Academic PDF</span>
+          <input type="file" accept=".pdf" onChange={handleFileUpload} className="hidden" />
+        </label>
       </div>
     );
   }
@@ -84,13 +133,14 @@ export const PDFSummarizer: React.FC<PDFSummarizerProps> = ({
   ).sort((a, b) => a - b);
 
   return (
-    <div className="space-y-5">
-      {/* Top Header Bar: Document Switcher & View Mode Controls */}
-      <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 flex flex-col xl:flex-row xl:items-center xl:justify-between gap-4 shadow-lg">
+    <div className="space-y-4">
+      {/* Top Document Bar: Active Document Selector & View Mode Switcher */}
+      <div className="bg-slate-900/95 border border-slate-800 rounded-2xl p-4 flex flex-col xl:flex-row xl:items-center xl:justify-between gap-4 shadow-xl">
         <div className="space-y-2">
           <div className="flex flex-wrap items-center gap-2">
-            <span className="text-[11px] font-mono uppercase px-2.5 py-0.5 rounded-full bg-cyan-500/15 text-cyan-300 border border-cyan-500/30 font-semibold">
-              Split Model • Standard Academic PDF Reader
+            <span className="text-[11px] font-mono uppercase px-2.5 py-0.5 rounded-full bg-cyan-500/15 text-cyan-300 border border-cyan-500/30 font-semibold flex items-center gap-1.5">
+              <FileText className="w-3.5 h-3.5 text-cyan-400" />
+              <span>Standard Academic PDF Viewer & Split Workbench</span>
             </span>
             <span
               className={`text-[11px] font-semibold px-2.5 py-0.5 rounded-full border ${complexityMeta.badgeColor}`}
@@ -100,73 +150,78 @@ export const PDFSummarizer: React.FC<PDFSummarizerProps> = ({
           </div>
 
           {/* Document Tabs */}
-          <div className="flex flex-wrap gap-2 pt-1">
+          <div className="flex flex-wrap items-center gap-2 pt-1">
             {pdfSources.map((pdf) => {
               const isCurrent = pdf.id === activePdf.id && !showCompareMatrix;
               return (
                 <button
                   key={pdf.id}
                   type="button"
-                  onClick={() => {
-                    setActivePdfId(pdf.id);
-                    setShowCompareMatrix(false);
-                  }}
+                  onClick={() => handleSelectActivePdf(pdf.id)}
                   className={`px-3.5 py-1.5 rounded-xl text-xs font-medium flex items-center gap-2 border transition-all ${
                     isCurrent
-                      ? 'bg-indigo-600 text-white border-indigo-400 shadow-md shadow-indigo-500/20 font-semibold'
+                      ? 'bg-indigo-600 text-white border-indigo-400 shadow-md shadow-indigo-500/25 font-semibold'
                       : 'bg-slate-950 hover:bg-slate-800 text-slate-300 border-slate-800'
                   }`}
                 >
                   <FileText className="w-3.5 h-3.5" />
-                  <span className="truncate max-w-[200px]">{pdf.filename}</span>
-                  <span className="text-[10px] font-mono opacity-75">
+                  <span className="truncate max-w-[210px]">{pdf.filename}</span>
+                  <span className="text-[10px] font-mono opacity-80">
                     ({pdf.pageCount}p)
                   </span>
                 </button>
               );
             })}
+
+            {onUploadPdfFile && (
+              <label className="px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 bg-slate-950 hover:bg-slate-800 text-indigo-300 border border-indigo-500/30 cursor-pointer transition">
+                <Upload className="w-3.5 h-3.5" />
+                <span>+ Upload PDF</span>
+                <input type="file" accept=".pdf" onChange={handleFileUpload} className="hidden" />
+              </label>
+            )}
           </div>
         </div>
 
-        {/* Right Action Controls: Split Model Switcher + Matrix Toggle */}
+        {/* View Mode Switcher: Split Model vs Standard Full Reader vs Summaries */}
         <div className="flex flex-wrap items-center gap-2.5 shrink-0">
           {!showCompareMatrix && (
             <div className="flex items-center bg-slate-950 border border-slate-800 rounded-xl p-1 gap-1">
               <button
                 type="button"
                 onClick={() => setLayoutMode('split')}
-                title="Split Model (Side-by-Side: PDF + AI Summaries)"
+                title="Split Model (Side-by-Side: PDF Document + AI Summaries)"
                 className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition ${
                   layoutMode === 'split'
-                    ? 'bg-indigo-600 text-white shadow-sm'
+                    ? 'bg-indigo-600 text-white shadow-md'
                     : 'text-slate-400 hover:text-white'
                 }`}
               >
                 <Columns className="w-3.5 h-3.5" />
-                <span>Split Model</span>
+                <span>Split Model (Side-by-Side)</span>
               </button>
 
               <button
                 type="button"
                 onClick={() => setLayoutMode('reader')}
-                title="Full-Screen Standard PDF Reader"
+                title="Full-Screen Standard PDF Document Reader"
                 className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition ${
                   layoutMode === 'reader'
-                    ? 'bg-indigo-600 text-white shadow-sm'
+                    ? 'bg-indigo-600 text-white shadow-md'
                     : 'text-slate-400 hover:text-white'
                 }`}
               >
                 <Maximize2 className="w-3.5 h-3.5" />
-                <span>Standard Reader</span>
+                <span>Full Reader</span>
               </button>
 
               <button
                 type="button"
                 onClick={() => setLayoutMode('summary')}
-                title="Summary & Argument Map Focus"
+                title="Summaries & Argument Map Only"
                 className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition ${
                   layoutMode === 'summary'
-                    ? 'bg-indigo-600 text-white shadow-sm'
+                    ? 'bg-indigo-600 text-white shadow-md'
                     : 'text-slate-400 hover:text-white'
                 }`}
               >
@@ -189,8 +244,8 @@ export const PDFSummarizer: React.FC<PDFSummarizerProps> = ({
               <Scale className="w-4 h-4" />
               <span>
                 {showCompareMatrix
-                  ? 'Back to Standard Split View'
-                  : `Compare ${pdfSources.length} PDFs (Matrix)`}
+                  ? 'Back to Split Model'
+                  : `Compare ${pdfSources.length} PDFs`}
               </span>
             </button>
           )}
@@ -295,40 +350,45 @@ export const PDFSummarizer: React.FC<PDFSummarizerProps> = ({
           </div>
         </div>
       ) : (
-        /* VIEW MODE B: STANDARD SPLIT SCREEN MODEL (Side-by-Side PDF Reader + 3-Tier Summaries) */
+        /* VIEW MODE B: STANDARD SPLIT SCREEN MODEL (Side-by-Side Standard PDF Reader + 3-Tier Summaries) */
         <div
           className={`grid gap-6 transition-all ${
             layoutMode === 'split'
-              ? 'grid-cols-1 lg:grid-cols-12'
+              ? 'grid-cols-1 lg:grid-cols-12 items-start'
               : 'grid-cols-1'
           }`}
         >
-          {/* LEFT PANE: STANDARD-SIZE ACADEMIC PDF DOCUMENT VIEWER (Full Standard Height & A4 Proportions) */}
+          {/* LEFT PANE: STANDARD-SIZE ACADEMIC PDF DOCUMENT VIEWER */}
           {(layoutMode === 'split' || layoutMode === 'reader') && (
             <div
-              className={`rounded-2xl bg-slate-900/95 border border-indigo-500/30 shadow-2xl flex flex-col overflow-hidden ${
-                layoutMode === 'split' ? 'lg:col-span-7 h-[780px]' : 'w-full h-[850px]'
+              className={`rounded-2xl bg-slate-900 border border-slate-800 shadow-2xl flex flex-col overflow-hidden ${
+                layoutMode === 'split' ? 'lg:col-span-7 h-[850px]' : 'w-full h-[900px]'
               }`}
             >
               {/* Document Reader Toolbar */}
               <div className="p-3 bg-slate-950 border-b border-slate-800 flex flex-wrap items-center justify-between gap-2.5">
                 <div className="flex items-center gap-2 min-w-0">
-                  <div className="p-1.5 rounded-lg bg-indigo-500/15 text-indigo-400 shrink-0">
+                  <div className="p-1.5 rounded-lg bg-cyan-500/15 text-cyan-400 shrink-0">
                     <FileText className="w-4 h-4" />
                   </div>
                   <div className="min-w-0">
-                    <h4 className="text-xs font-bold text-white font-mono truncate max-w-[260px] sm:max-w-[340px]">
-                      {activePdf.filename}
-                    </h4>
-                    <p className="text-[10px] text-slate-400 font-mono">
-                      Page {selectedPage} of {activePdf.pageCount} • Standard Academic Layout
+                    <div className="flex items-center gap-2">
+                      <h4 className="text-xs font-bold text-white font-mono truncate max-w-[200px] sm:max-w-[320px]">
+                        {activePdf.filename}
+                      </h4>
+                      <span className="px-1.5 py-0.5 rounded bg-slate-800 text-[10px] font-mono text-cyan-300 shrink-0">
+                        Page {selectedPage} / {activePdf.pageCount}
+                      </span>
+                    </div>
+                    <p className="text-[10px] text-slate-400 truncate">
+                      {activePdf.authors} ({activePdf.publicationYear})
                     </p>
                   </div>
                 </div>
 
-                {/* Reader Controls: Page Stepper, Direct Jump & Standard Zoom */}
+                {/* Reader Controls: Page Stepper, Theme & View Mode */}
                 <div className="flex items-center gap-2">
-                  {/* Prev / Next Page Buttons */}
+                  {/* Page Stepper */}
                   <div className="flex items-center bg-slate-900 border border-slate-800 rounded-lg p-0.5">
                     <button
                       type="button"
@@ -361,7 +421,7 @@ export const PDFSummarizer: React.FC<PDFSummarizerProps> = ({
                       className="p-1 text-slate-400 hover:text-white"
                       title="Zoom Out"
                     >
-                      <ZoomOut className="w-3 h-3" />
+                      <ZoomOut className="w-3.5 h-3.5" />
                     </button>
                     <span className="text-[11px] text-slate-300 px-1.5">{pdfZoom}%</span>
                     <button
@@ -370,65 +430,145 @@ export const PDFSummarizer: React.FC<PDFSummarizerProps> = ({
                       className="p-1 text-slate-400 hover:text-white"
                       title="Zoom In"
                     >
-                      <ZoomIn className="w-3 h-3" />
+                      <ZoomIn className="w-3.5 h-3.5" />
                     </button>
                   </div>
 
-                  {/* Quick Page Jump Pills */}
-                  <div className="hidden sm:flex items-center gap-1">
-                    {availablePages.slice(0, 4).map((pg) => (
-                      <button
-                        key={pg}
-                        type="button"
-                        onClick={() => setSelectedPage(pg)}
-                        className={`px-2 py-0.5 rounded text-[11px] font-mono transition ${
-                          selectedPage === pg
-                            ? 'bg-indigo-600 text-white font-bold'
-                            : 'bg-slate-900 text-slate-400 hover:text-white border border-slate-800'
-                        }`}
-                      >
-                        {pg}
-                      </button>
-                    ))}
+                  {/* Paper Theme (Light/Dark Paper Mode) */}
+                  <div className="flex items-center bg-slate-900 border border-slate-800 rounded-lg p-0.5">
+                    <button
+                      type="button"
+                      onClick={() => setPaperTheme('light')}
+                      className={`p-1 rounded text-xs transition ${
+                        paperTheme === 'light' ? 'bg-amber-100 text-slate-950 font-bold' : 'text-slate-400 hover:text-white'
+                      }`}
+                      title="Crisp White Paper A4 Mode"
+                    >
+                      <Sun className="w-3.5 h-3.5" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setPaperTheme('dark')}
+                      className={`p-1 rounded text-xs transition ${
+                        paperTheme === 'dark' ? 'bg-slate-800 text-white font-bold' : 'text-slate-400 hover:text-white'
+                      }`}
+                      title="Dark Document Mode"
+                    >
+                      <Moon className="w-3.5 h-3.5" />
+                    </button>
                   </div>
+
+                  {/* If activePdf has real fileUrl, allow toggle to direct embed */}
+                  {activePdf.fileUrl && (
+                    <button
+                      type="button"
+                      onClick={() => setViewModeType(viewModeType === 'sheet' ? 'embed' : 'sheet')}
+                      className="px-2.5 py-1 rounded-lg bg-indigo-500/20 text-indigo-300 text-xs font-semibold border border-indigo-500/30 flex items-center gap-1"
+                    >
+                      <ExternalLink className="w-3 h-3" />
+                      <span>{viewModeType === 'sheet' ? 'Direct PDF' : 'Paper View'}</span>
+                    </button>
+                  )}
                 </div>
               </div>
 
-              {/* Document Canvas Body: Real A4 Standard Proportions with Paper Styling */}
-              <div className="flex-1 overflow-y-auto bg-slate-950/90 p-4 sm:p-6 flex justify-center scroll-smooth">
-                <div
-                  style={{ transform: `scale(${pdfZoom / 100})`, transformOrigin: 'top center' }}
-                  className="w-full max-w-[650px] min-h-[920px] bg-slate-900 border border-slate-800 rounded-xl shadow-2xl p-6 sm:p-8 space-y-6 text-slate-200 transition-transform duration-150"
-                >
-                  {/* Academic Document Header / Running Title */}
-                  <div className="border-b border-slate-800 pb-3 flex items-center justify-between text-[11px] font-mono text-slate-400">
-                    <span>{activePdf.authors} ({activePdf.publicationYear})</span>
-                    <span className="text-indigo-400 font-semibold uppercase">
-                      Page {selectedPage} of {activePdf.pageCount}
-                    </span>
-                  </div>
+              {/* Quick Jump Page Strip */}
+              <div className="px-4 py-2 bg-slate-950/80 border-b border-slate-800 flex items-center justify-between text-xs font-mono">
+                <span className="text-slate-400 flex items-center gap-1">
+                  <Layers className="w-3.5 h-3.5 text-indigo-400" />
+                  <span>Document Outline & Pages:</span>
+                </span>
+                <div className="flex items-center gap-1.5">
+                  {availablePages.map((pg) => (
+                    <button
+                      key={pg}
+                      type="button"
+                      onClick={() => setSelectedPage(pg)}
+                      className={`px-2.5 py-0.5 rounded text-[11px] font-mono transition ${
+                        selectedPage === pg
+                          ? 'bg-indigo-600 text-white font-bold shadow-sm'
+                          : 'bg-slate-900 text-slate-400 hover:text-white border border-slate-800'
+                      }`}
+                    >
+                      Page {pg}
+                    </button>
+                  ))}
+                </div>
+              </div>
 
-                  {/* Document Title Banner */}
-                  <div className="space-y-1.5 pt-1">
-                    <span className="text-[10px] font-mono uppercase px-2 py-0.5 rounded bg-indigo-500/15 text-indigo-300 border border-indigo-500/25">
-                      Peer-Reviewed Academic Publication
-                    </span>
-                    <h2 className="text-base sm:text-lg font-bold text-white tracking-tight leading-snug">
-                      {activePdf.filename.replace('.pdf', '').replace(/_/g, ' ')}
-                    </h2>
-                    <p className="text-xs text-slate-400 italic">
-                      {activePdf.authors} • Published in Journal of Bioenergetics & Systems Modeling
-                    </p>
-                  </div>
+              {/* Document Canvas Body: Authentic High-Contrast Paper Sheet or Direct PDF Embed */}
+              <div className="flex-1 overflow-y-auto bg-slate-950 p-4 sm:p-6 flex justify-center scroll-smooth">
+                {viewModeType === 'embed' && activePdf.fileUrl ? (
+                  <iframe
+                    src={`${activePdf.fileUrl}#page=${selectedPage}`}
+                    title={activePdf.filename}
+                    className="w-full h-full rounded-xl border border-slate-800 bg-white"
+                  />
+                ) : (
+                  <div
+                    style={{ transform: `scale(${pdfZoom / 100})`, transformOrigin: 'top center' }}
+                    className={`w-full max-w-[680px] min-h-[960px] rounded-xl shadow-2xl p-8 sm:p-10 space-y-6 transition-all duration-150 border ${
+                      paperTheme === 'light'
+                        ? 'bg-white text-slate-950 border-slate-300 shadow-white/5 ring-1 ring-black/5'
+                        : 'bg-slate-900 text-slate-100 border-slate-800 shadow-black/60'
+                    }`}
+                  >
+                    {/* Running Header */}
+                    <div
+                      className={`border-b pb-3 flex items-center justify-between text-[11px] font-mono ${
+                        paperTheme === 'light' ? 'border-slate-300 text-slate-500' : 'border-slate-800 text-slate-400'
+                      }`}
+                    >
+                      <span className="font-semibold">{activePdf.authors}</span>
+                      <span className="uppercase tracking-wider font-bold text-indigo-600">
+                        Academic Research Journal • Page {selectedPage} of {activePdf.pageCount}
+                      </span>
+                    </div>
 
-                  {/* Simulated A4 Manuscript Sections for Selected Page */}
-                  <div className="space-y-5 text-xs sm:text-sm leading-relaxed text-slate-300">
-                    <div className="p-3.5 rounded-xl bg-slate-950/70 border border-slate-800 space-y-2">
-                      <div className="flex items-center justify-between">
-                        <span className="text-[11px] font-mono uppercase text-indigo-300 font-bold flex items-center gap-1.5">
-                          <Highlighter className="w-3.5 h-3.5" />
-                          <span>Manuscript Excerpt — Page {selectedPage}</span>
+                    {/* Paper Title Banner */}
+                    <div className="space-y-2 pt-1 border-b pb-4">
+                      <div className="flex items-center gap-2">
+                        <span className="text-[10px] font-mono font-bold uppercase px-2 py-0.5 rounded bg-indigo-100 text-indigo-900 border border-indigo-200">
+                          Peer-Reviewed Research Manuscript
                         </span>
+                        <span className="text-[11px] font-mono text-slate-500">
+                          DOI: 10.1038/s41586-026-bioenergetics
+                        </span>
+                      </div>
+                      <h2
+                        className={`text-xl sm:text-2xl font-serif font-bold tracking-tight leading-snug ${
+                          paperTheme === 'light' ? 'text-slate-900' : 'text-white'
+                        }`}
+                      >
+                        {activePdf.filename.replace('.pdf', '').replace(/_/g, ' ')}
+                      </h2>
+                      <p className={`text-xs font-serif italic ${paperTheme === 'light' ? 'text-slate-600' : 'text-slate-400'}`}>
+                        {activePdf.authors} • Department of Systems Biology & Mathematical Physics
+                      </p>
+                    </div>
+
+                    {/* Abstract Box */}
+                    <div
+                      className={`p-4 rounded-xl border-l-4 ${
+                        paperTheme === 'light'
+                          ? 'bg-slate-50 border-indigo-600 text-slate-800'
+                          : 'bg-slate-950 border-indigo-500 text-slate-200'
+                      } space-y-1.5`}
+                    >
+                      <span className="text-[11px] font-bold uppercase tracking-wider text-indigo-600 block">
+                        ABSTRACT & CORE THESIS (PAGE {selectedPage})
+                      </span>
+                      <p className="text-xs sm:text-[13px] font-serif leading-relaxed text-justify">
+                        {activePdf.summary.tldr[complexity]}
+                      </p>
+                    </div>
+
+                    {/* Manuscript Page Sections & Formulas */}
+                    <div className="space-y-6 pt-2 font-serif">
+                      <div className="flex items-center justify-between border-b pb-2">
+                        <h3 className="text-sm font-bold uppercase tracking-wider text-indigo-600">
+                          Section Content for Page {selectedPage}
+                        </h3>
                         {onPinPageAnchor && (
                           <button
                             type="button"
@@ -440,60 +580,73 @@ export const PDFSummarizer: React.FC<PDFSummarizerProps> = ({
                                   `Section discussion on page ${selectedPage}`
                               )
                             }
-                            className="px-2 py-0.5 rounded bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 border border-emerald-500/30 text-[10px] font-semibold flex items-center gap-1"
+                            className="px-2.5 py-1 rounded-md bg-emerald-100 text-emerald-900 border border-emerald-300 text-[11px] font-sans font-bold flex items-center gap-1 hover:bg-emerald-200 transition"
                           >
-                            <BookmarkPlus className="w-3 h-3" />
-                            <span>Anchor Page {selectedPage} Note</span>
+                            <BookmarkPlus className="w-3.5 h-3.5 text-emerald-700" />
+                            <span>Anchor Highlight (Page {selectedPage})</span>
                           </button>
                         )}
                       </div>
-                      <p className="text-slate-300 leading-relaxed font-serif text-[13px]">
-                        {activePdf.summary.tldr[complexity]}
-                      </p>
-                    </div>
 
-                    {/* Section Headings & Formulas on this Page */}
-                    <div className="space-y-4">
-                      {activePdf.summary.argumentMap.map((arg, idx) => (
+                      {/* Display Nodes related to this page */}
+                      {activePdf.summary.argumentMap.map((node, idx) => (
                         <div
-                          key={arg.id}
+                          key={node.id}
                           className={`p-4 rounded-xl border transition-all ${
-                            selectedPage === arg.pageRef
-                              ? 'bg-indigo-950/30 border-indigo-500/60 shadow-md ring-1 ring-indigo-500/40'
-                              : 'bg-slate-950/40 border-slate-800/80 hover:border-slate-700'
+                            selectedPage === node.pageRef
+                              ? paperTheme === 'light'
+                                ? 'bg-indigo-50/70 border-indigo-400 ring-2 ring-indigo-500/20 shadow-md'
+                                : 'bg-indigo-950/40 border-indigo-500 shadow-md ring-1 ring-indigo-500/40'
+                              : paperTheme === 'light'
+                              ? 'bg-slate-50/60 border-slate-200'
+                              : 'bg-slate-950/40 border-slate-800'
                           }`}
                         >
-                          <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
-                            <span className="font-mono text-xs font-bold text-white flex items-center gap-1.5">
-                              <span className="text-indigo-400">§ {idx + 1}.0</span>
-                              <span>{arg.heading}</span>
+                          <div className="flex items-center justify-between mb-2 font-sans">
+                            <span className="text-xs font-bold text-indigo-600 flex items-center gap-1.5">
+                              <span>§ {idx + 1}.0</span>
+                              <span>{node.heading}</span>
                             </span>
-                            <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-slate-800 text-cyan-300">
-                              Page {arg.pageRef}
+                            <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-slate-200 text-slate-800 font-bold">
+                              Page {node.pageRef}
                             </span>
                           </div>
 
-                          {arg.formulaOrHighlight && (
-                            <div className="my-2.5 p-3 rounded-lg bg-slate-950 border border-amber-500/30 font-mono text-amber-300 text-xs shadow-inner flex items-center justify-between">
-                              <span>{arg.formulaOrHighlight}</span>
-                              <span className="text-[10px] text-slate-500">Eq. ({idx + 1})</span>
+                          {node.formulaOrHighlight && (
+                            <div
+                              className={`my-3 p-3 rounded-lg border font-mono text-xs flex items-center justify-between shadow-inner ${
+                                paperTheme === 'light'
+                                  ? 'bg-amber-50 border-amber-300 text-amber-950'
+                                  : 'bg-slate-950 border-amber-500/40 text-amber-300'
+                              }`}
+                            >
+                              <span className="font-bold">{node.formulaOrHighlight}</span>
+                              <span className="text-[10px] opacity-75">Eq. ({idx + 1})</span>
                             </div>
                           )}
 
-                          <p className="text-slate-300 text-xs sm:text-[13px] leading-relaxed">
-                            {arg.contentByComplexity[complexity]}
+                          <p
+                            className={`text-xs sm:text-[13px] leading-relaxed text-justify ${
+                              paperTheme === 'light' ? 'text-slate-800' : 'text-slate-300'
+                            }`}
+                          >
+                            {node.contentByComplexity[complexity]}
                           </p>
                         </div>
                       ))}
                     </div>
 
-                    {/* Page Footer */}
-                    <div className="pt-4 border-t border-slate-800/80 flex items-center justify-between text-[11px] font-mono text-slate-500">
-                      <span>StudyRetrieval Grounded Document Engine</span>
-                      <span>Page {selectedPage} of {activePdf.pageCount}</span>
+                    {/* Page Footer Watermark */}
+                    <div
+                      className={`pt-6 border-t flex items-center justify-between text-[11px] font-mono ${
+                        paperTheme === 'light' ? 'border-slate-300 text-slate-400' : 'border-slate-800 text-slate-500'
+                      }`}
+                    >
+                      <span>StudyRetrieval Grounded Academic Engine</span>
+                      <span className="font-bold">Page {selectedPage} of {activePdf.pageCount}</span>
                     </div>
                   </div>
-                </div>
+                )}
               </div>
             </div>
           )}
@@ -501,12 +654,12 @@ export const PDFSummarizer: React.FC<PDFSummarizerProps> = ({
           {/* RIGHT PANE: 3-TIER HIERARCHICAL SUMMARIES & ARGUMENT MATRIX */}
           {(layoutMode === 'split' || layoutMode === 'summary') && (
             <div
-              className={`space-y-5 overflow-y-auto ${
-                layoutMode === 'split' ? 'lg:col-span-5 h-[780px] pr-1' : 'w-full'
+              className={`space-y-4 overflow-y-auto ${
+                layoutMode === 'split' ? 'lg:col-span-5 h-[850px] pr-1' : 'w-full'
               }`}
             >
               {/* Internal Tab Filter for Right Pane */}
-              <div className="flex items-center justify-between bg-slate-900 border border-slate-800 p-1.5 rounded-xl">
+              <div className="flex items-center justify-between bg-slate-900 border border-slate-800 p-2 rounded-xl">
                 <span className="text-xs font-bold uppercase tracking-wider text-slate-300 px-2 flex items-center gap-1.5">
                   <Sparkles className="w-3.5 h-3.5 text-indigo-400" />
                   <span>3-Tier AI Breakdown</span>

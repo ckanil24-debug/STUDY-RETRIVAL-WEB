@@ -18,6 +18,9 @@ interface SidebarProps {
   onSelectFolder: (folderId: string) => void;
   onAddYouTubeUrl: (url: string, title: string) => void;
   onUploadPdfFile: (file: File) => void;
+  onSelectPdf?: (pdfId: string) => void;
+  onSelectYouTube?: (ytId: string) => void;
+  activePdfId?: string;
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({
@@ -26,6 +29,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onSelectFolder,
   onAddYouTubeUrl,
   onUploadPdfFile,
+  onSelectPdf,
+  onSelectYouTube,
+  activePdfId,
 }) => {
   const [showAddYoutube, setShowAddYoutube] = useState(false);
   const [ytUrl, setYtUrl] = useState('');
@@ -135,39 +141,67 @@ export const Sidebar: React.FC<SidebarProps> = ({
             {/* YouTube Videos List */}
             <div className="space-y-1.5">
               {activeFolder.youtubeSources.map((yt) => (
-                <div
+                <button
                   key={yt.id}
-                  className="p-2.5 rounded-xl bg-slate-950/80 border border-slate-800/80 flex items-start gap-2.5"
+                  type="button"
+                  onClick={() => onSelectYouTube && onSelectYouTube(yt.id)}
+                  className="w-full text-left p-2.5 rounded-xl bg-slate-950/80 border border-slate-800/80 hover:border-rose-500/50 hover:bg-slate-900 transition flex items-start gap-2.5 group"
                 >
-                  <div className="p-1.5 rounded-lg bg-rose-500/15 text-rose-400 mt-0.5">
+                  <div className="p-1.5 rounded-lg bg-rose-500/15 text-rose-400 mt-0.5 group-hover:bg-rose-500/25">
                     <Video className="w-3.5 h-3.5" />
                   </div>
                   <div className="min-w-0 flex-1">
-                    <p className="text-xs font-medium text-slate-200 truncate">{yt.title}</p>
+                    <p className="text-xs font-medium text-slate-200 truncate group-hover:text-rose-300">
+                      {yt.title}
+                    </p>
                     <p className="text-[10px] text-slate-400 font-mono mt-0.5">
                       {yt.chapters.length} Chapters • {yt.duration}
                     </p>
                   </div>
-                </div>
+                </button>
               ))}
 
               {/* PDFs List */}
-              {activeFolder.pdfSources.map((pdf) => (
-                <div
-                  key={pdf.id}
-                  className="p-2.5 rounded-xl bg-slate-950/80 border border-slate-800/80 flex items-start gap-2.5"
-                >
-                  <div className="p-1.5 rounded-lg bg-cyan-500/15 text-cyan-400 mt-0.5">
-                    <FileText className="w-3.5 h-3.5" />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="text-xs font-medium text-slate-200 truncate">{pdf.filename}</p>
-                    <p className="text-[10px] text-slate-400 font-mono mt-0.5">
-                      {pdf.pageCount} pages • 3-Tier Indexed
-                    </p>
-                  </div>
-                </div>
-              ))}
+              {activeFolder.pdfSources.map((pdf) => {
+                const isSelected = activePdfId === pdf.id;
+                return (
+                  <button
+                    key={pdf.id}
+                    type="button"
+                    onClick={() => onSelectPdf && onSelectPdf(pdf.id)}
+                    className={`w-full text-left p-2.5 rounded-xl border transition flex items-start gap-2.5 group ${
+                      isSelected
+                        ? 'bg-cyan-950/40 border-cyan-500/60 shadow-sm'
+                        : 'bg-slate-950/80 border-slate-800/80 hover:border-cyan-500/50 hover:bg-slate-900'
+                    }`}
+                  >
+                    <div
+                      className={`p-1.5 rounded-lg mt-0.5 ${
+                        isSelected
+                          ? 'bg-cyan-500 text-slate-950 font-bold'
+                          : 'bg-cyan-500/15 text-cyan-400 group-hover:bg-cyan-500/25'
+                      }`}
+                    >
+                      <FileText className="w-3.5 h-3.5" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p
+                        className={`text-xs font-medium truncate ${
+                          isSelected ? 'text-cyan-300 font-bold' : 'text-slate-200 group-hover:text-cyan-300'
+                        }`}
+                      >
+                        {pdf.filename}
+                      </p>
+                      <div className="flex items-center justify-between text-[10px] text-slate-400 font-mono mt-0.5">
+                        <span>{pdf.pageCount} pages</span>
+                        <span className="text-cyan-400 font-semibold group-hover:underline">
+                          View in Split Model →
+                        </span>
+                      </div>
+                    </div>
+                  </button>
+                );
+              })}
             </div>
 
             {/* Ingest Actions: Upload PDF or Paste YouTube URL */}

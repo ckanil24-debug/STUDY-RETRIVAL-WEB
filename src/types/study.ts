@@ -108,6 +108,7 @@ export interface PDFSource {
   publicationYear: number;
   pageCount: number;
   uploadedAt: string;
+  fileUrl?: string;
   summary: PDFTieredSummary;
 }
 

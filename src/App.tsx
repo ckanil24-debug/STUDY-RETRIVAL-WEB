@@ -35,7 +35,10 @@ const WorkspaceContent: React.FC = () => {
   const [activeFolderId, setActiveFolderId] = useState<string>(
     INITIAL_STUDY_FOLDERS[0].id
   );
-  const [activeTab, setActiveTab] = useState<WorkspaceTab>('youtube');
+  const [selectedPdfId, setSelectedPdfId] = useState<string>(
+    INITIAL_STUDY_FOLDERS[0].pdfSources[0]?.id || ''
+  );
+  const [activeTab, setActiveTab] = useState<WorkspaceTab>('pdf');
   const [complexity, setComplexity] = useState<ComplexityLevel>(3);
   const [geminiApiKey, setGeminiApiKey] = useState<string>('');
   const [externalSeekSeconds, setExternalSeekSeconds] = useState<number | null>(
@@ -164,13 +167,15 @@ const WorkspaceContent: React.FC = () => {
 
   const handleUploadPdfFile = (file: File) => {
     const cleanName = file.name;
+    const blobUrl = URL.createObjectURL(file);
     const newPdf: PDFSource = {
       id: 'pdf-' + Date.now(),
       filename: cleanName,
-      authors: 'Uploaded Study Manuscript',
+      authors: 'Uploaded Academic Manuscript',
       publicationYear: 2026,
       pageCount: 12,
       uploadedAt: 'Just now',
+      fileUrl: blobUrl,
       summary: {
         tldr: {
           1: `This uploaded document (${cleanName}) explains a big scientific idea using clear step-by-step building blocks. It shows what slows the system down and how a smart design fixes the problem. By the end, you can see how all the pieces work together in real life!`,
@@ -233,8 +238,9 @@ const WorkspaceContent: React.FC = () => {
           : f
       )
     );
+    setSelectedPdfId(newPdf.id);
     setActiveTab('pdf');
-    showToast(`Extracted 3-Tier Hierarchy (TL;DR, Argument Map, Glossary) for "${cleanName}".`);
+    showToast(`Loaded PDF into Split Model: "${cleanName}".`);
   };
 
   const handleCrossSourceVideoJump = (seconds: number) => {
@@ -396,9 +402,22 @@ const WorkspaceContent: React.FC = () => {
         <Sidebar
           folders={folders}
           activeFolderId={activeFolder.id}
+          activePdfId={selectedPdfId}
           onSelectFolder={(id) => {
             setActiveFolderId(id);
             setExternalSeekSeconds(null);
+            const found = folders.find((f) => f.id === id);
+            if (found && found.pdfSources[0]) {
+              setSelectedPdfId(found.pdfSources[0].id);
+            }
+          }}
+          onSelectPdf={(pdfId) => {
+            setSelectedPdfId(pdfId);
+            setActiveTab('pdf');
+            showToast('Opened PDF in Standard Split Model Viewer.');
+          }}
+          onSelectYouTube={() => {
+            setActiveTab('youtube');
           }}
           onAddYouTubeUrl={handleAddYouTubeUrl}
           onUploadPdfFile={handleUploadPdfFile}
@@ -440,14 +459,14 @@ const WorkspaceContent: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setActiveTab('pdf')}
-                className={`px-3.5 py-2 rounded-xl text-xs font-semibold flex items-center gap-2 transition-all ${
+                className={`px-4 py-2 rounded-xl text-xs font-semibold flex items-center gap-2 transition-all ${
                   activeTab === 'pdf'
-                    ? 'bg-cyan-600 text-white shadow-md shadow-cyan-600/25'
+                    ? 'bg-cyan-600 text-white shadow-lg shadow-cyan-600/30 ring-2 ring-cyan-400/50'
                     : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
                 }`}
               >
-                <FileText className="w-3.5 h-3.5" />
-                <span>PDF Summarizer (3-Tier)</span>
+                <FileText className="w-4 h-4 text-cyan-300" />
+                <span>PDF Viewer & Summaries (Split Model)</span>
               </button>
 
               <button
@@ -505,7 +524,10 @@ const WorkspaceContent: React.FC = () => {
               pdfSources={activeFolder.pdfSources}
               multiPdfComparison={activeFolder.multiPdfComparison}
               complexity={complexity}
+              selectedPdfId={selectedPdfId}
+              onSelectPdf={setSelectedPdfId}
               onPinPageAnchor={handlePinPageAnchor}
+              onUploadPdfFile={handleUploadPdfFile}
             />
           )}
 
