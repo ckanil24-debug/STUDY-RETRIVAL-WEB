@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Video, FileText, Layers, CheckCircle2, Bookmark, ShieldCheck } from 'lucide-react';
+import { Video, FileText, Layers, CheckCircle2, Bookmark, ShieldCheck, AlertTriangle, ChevronUp, ChevronDown } from 'lucide-react';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { AuthView } from './components/auth/AuthView';
 import { Header } from './components/layout/Header';
@@ -9,6 +9,7 @@ import { PDFSummarizer } from './components/pdf/PDFSummarizer';
 import { SmartCompanionView } from './components/companion/SmartCompanionView';
 import { KnowledgeHubView } from './components/notebook/KnowledgeHubView';
 import { EcosystemAndChecklistView } from './components/notebook/EcosystemAndChecklistView';
+import { DocumentUploadCard } from './components/common/DocumentUploadCard';
 import { INITIAL_STUDY_FOLDERS } from './data/mockStudyFolders';
 import {
   AnchoredNote,
@@ -47,6 +48,18 @@ const WorkspaceContent: React.FC = () => {
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [activeLanguage, setActiveLanguage] = useState<string>('EN');
   const [userPlan, setUserPlan] = useState<'Free' | 'Pro'>('Pro');
+  const [isDarkTheme, setIsDarkTheme] = useState<boolean>(true);
+  const [showHeroUploader, setShowHeroUploader] = useState<boolean>(true);
+
+  const totalLibraryCount = folders.reduce(
+    (acc, f) =>
+      acc +
+      f.pdfSources.length +
+      f.youtubeSources.length +
+      (f.podcastSources?.length || 0) +
+      (f.webArticleSources?.length || 0),
+    0
+  );
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -372,8 +385,8 @@ const WorkspaceContent: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col">
-      {/* Top Header with User Profile, Logout & Standout 5-Tier Complexity Slider */}
+    <div className={`min-h-screen text-slate-100 flex flex-col ${isDarkTheme ? 'bg-[#090d16]' : 'bg-slate-950'}`}>
+      {/* Top Header with InstAI Logo, Language Switcher [EN | മല], Theme & Library Count */}
       <Header
         complexity={complexity}
         onComplexityChange={setComplexity}
@@ -386,11 +399,27 @@ const WorkspaceContent: React.FC = () => {
               : 'Switched to built-in instant multi-tier engine.'
           );
         }}
+        activeLanguage={activeLanguage}
+        onToggleLanguage={() => {
+          const next = activeLanguage === 'EN' ? 'ML' : 'EN';
+          setActiveLanguage(next);
+          showToast(
+            next === 'ML'
+              ? 'മലയാളം ഇന്റർഫേസിലേക്ക് മാറ്റി (Malayalam Mode Active)'
+              : 'Switched to English interface'
+          );
+        }}
+        isDarkTheme={isDarkTheme}
+        onToggleTheme={() => setIsDarkTheme(!isDarkTheme)}
+        libraryCount={totalLibraryCount}
+        onOpenLibrary={() => {
+          showToast(`Opening Library (${totalLibraryCount} files)`);
+        }}
       />
 
       {/* Toast Notification */}
       {toastMessage && (
-        <div className="fixed bottom-5 right-5 z-50 bg-indigo-950/95 border border-indigo-500/50 text-indigo-100 px-4 py-3 rounded-xl shadow-2xl flex items-center gap-2.5 text-xs font-medium backdrop-blur-md">
+        <div className="fixed bottom-12 right-5 z-50 bg-indigo-950/95 border border-indigo-500/50 text-indigo-100 px-4 py-3 rounded-xl shadow-2xl flex items-center gap-2.5 text-xs font-medium backdrop-blur-md animate-in fade-in slide-in-from-bottom-2">
           <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
           <span>{toastMessage}</span>
         </div>
@@ -424,7 +453,48 @@ const WorkspaceContent: React.FC = () => {
         />
 
         {/* Right Main Content Area */}
-        <main className="flex-1 p-4 sm:p-6 lg:p-8 space-y-6 min-w-0">
+        <main className="flex-1 p-3 sm:p-6 lg:p-8 space-y-5 min-w-0">
+          {/* InstAI Hero & Multi-Format Ingestion Card (Matching user mobile screenshot) */}
+          <div className="relative">
+            {showHeroUploader && (
+              <DocumentUploadCard
+                activeTab={activeTab}
+                onSelectTab={setActiveTab}
+                onUploadFile={handleUploadPdfFile}
+                onTrySamplePdf={() => {
+                  setSelectedPdfId(activeFolder.pdfSources[0]?.id || '');
+                  setActiveTab('pdf');
+                  showToast('Loaded sample academic PDF in Split Model!');
+                }}
+                onOpenLibrary={() => {
+                  showToast(`My Library: ${totalLibraryCount} indexed study sources`);
+                }}
+                libraryCount={totalLibraryCount}
+                activeLanguage={activeLanguage}
+              />
+            )}
+
+            <div className="flex justify-center -mt-1 mb-2">
+              <button
+                type="button"
+                onClick={() => setShowHeroUploader(!showHeroUploader)}
+                className="px-3.5 py-1 rounded-full bg-slate-900/90 border border-slate-800 text-[11px] font-semibold text-slate-400 hover:text-white flex items-center gap-1.5 shadow-sm transition"
+              >
+                {showHeroUploader ? (
+                  <>
+                    <ChevronUp className="w-3.5 h-3.5" />
+                    <span>Collapse Upload Box</span>
+                  </>
+                ) : (
+                  <>
+                    <ChevronDown className="w-3.5 h-3.5" />
+                    <span>+ Upload Document / Scan Notes</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+
           {/* Folder Header + Pillar Navigation Tabs */}
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-800/90 pb-5">
             <div>
@@ -583,6 +653,18 @@ const WorkspaceContent: React.FC = () => {
           )}
         </main>
       </div>
+
+      {/* Bottom Sticky Disclaimer matching user's mobile screen */}
+      <footer className="sticky bottom-0 z-30 border-t border-slate-800/80 bg-[#090d16]/95 backdrop-blur-md py-2.5 px-4 text-center">
+        <p className="text-[11px] text-amber-300/90 flex items-center justify-center gap-1.5 font-medium">
+          <AlertTriangle className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+          <span>
+            {activeLanguage === 'ML'
+              ? 'AI സമ്മറികളിൽ തെറ്റുകൾ ഉണ്ടായേക്കാം. പ്രധാന വിവരങ്ങൾ ദയവായി പരിശോധിക്കുക.'
+              : 'AI summaries may contain mistakes. Please verify important information.'}
+          </span>
+        </p>
+      </footer>
     </div>
   );
 };
