@@ -19,6 +19,7 @@ import {
   StudyFolder,
 } from '../../types/study';
 import { VoiceInputButton } from '../common/VoiceInputButton';
+import { AIVoiceSpeaker } from '../common/AIVoiceSpeaker';
 
 interface SmartCompanionViewProps {
   folder: StudyFolder;
@@ -385,10 +386,14 @@ Provide a clear, cross-referenced answer at Complexity Level ${complexity} (${co
                 </span>
               </div>
 
-              {/* Synthesized Answer */}
-              <p className="text-xs sm:text-sm text-slate-200 leading-relaxed whitespace-pre-line">
-                {qa.answerByComplexity[complexity]}
-              </p>
+              {/* Synthesized Answer with AI Voice Audio Playback */}
+              <div className="space-y-2">
+                <AIVoiceSpeaker
+                  text={qa.answerByComplexity[complexity]}
+                  defaultLanguage={activeLanguage === 'ML' ? 'ml-IN' : 'en-US'}
+                  autoPlay={false}
+                />
+              </div>
 
               {/* Dual Source Citation Cards */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-1">

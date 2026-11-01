@@ -24,6 +24,7 @@ import {
   ExternalLink,
   Layers,
 } from 'lucide-react';
+import { AIVoiceSpeaker } from '../common/AIVoiceSpeaker';
 import {
   ComplexityLevel,
   COMPLEXITY_META,
@@ -700,9 +701,12 @@ export const PDFSummarizer: React.FC<PDFSummarizerProps> = ({
                     </span>
                   </div>
 
-                  <p className="text-xs sm:text-sm text-slate-200 leading-relaxed bg-slate-950/70 border border-slate-800/80 rounded-xl p-3.5">
-                    {activePdf.summary.tldr[complexity]}
-                  </p>
+                  <div className="bg-slate-950/70 border border-slate-800/80 rounded-xl p-3.5">
+                    <AIVoiceSpeaker
+                      text={activePdf.summary.tldr[complexity]}
+                      autoPlay={false}
+                    />
+                  </div>
                 </section>
               )}
 

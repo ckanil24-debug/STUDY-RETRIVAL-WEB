@@ -94,6 +94,18 @@ export const EcosystemAndChecklistView: React.FC<PRDChecklistAndEcosystemProps> 
       status: 'Verified',
     },
     {
+      section: 'Feature 1 (Voice)',
+      title: '🎤 Voice Input (Speech-to-Text in Malayalam & English)',
+      detail: 'Live microphone recording indicator, STT recognition, editable recognized text, permission & noise error handling.',
+      status: 'Verified',
+    },
+    {
+      section: 'Feature 2 (Voice)',
+      title: '🔊 AI Voice Answer (Natural TTS in Malayalam & English)',
+      detail: 'Natural speech output, 0.75x–2x speed controls, auto-read toggle, real-time synchronized sentence highlighting, and long-answer chunking.',
+      status: 'Verified',
+    },
+    {
       section: 'Pillar 5',
       title: '5-Tier Complexity Slider (ELI5 → Academic Peer Review)',
       detail: 'Instant zero-latency rewriting across all 5 difficulty tiers.',
