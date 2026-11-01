@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Video, FileText, Layers, CheckCircle2, Bookmark, ShieldCheck, AlertTriangle, ChevronUp, ChevronDown } from 'lucide-react';
+import { Video, FileText, Layers, CheckCircle2, Bookmark, ShieldCheck, AlertTriangle, ChevronUp, ChevronDown, GraduationCap } from 'lucide-react';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { AuthView } from './components/auth/AuthView';
 import { Header } from './components/layout/Header';
@@ -9,6 +9,7 @@ import { PDFSummarizer } from './components/pdf/PDFSummarizer';
 import { SmartCompanionView } from './components/companion/SmartCompanionView';
 import { KnowledgeHubView } from './components/notebook/KnowledgeHubView';
 import { EcosystemAndChecklistView } from './components/notebook/EcosystemAndChecklistView';
+import { AIEngineeringTeacher } from './components/teacher/AIEngineeringTeacher';
 import { DocumentUploadCard } from './components/common/DocumentUploadCard';
 import { INITIAL_STUDY_FOLDERS } from './data/mockStudyFolders';
 import {
@@ -21,7 +22,7 @@ import {
   YouTubeSource,
 } from './types/study';
 
-type WorkspaceTab = 'youtube' | 'pdf' | 'companion' | 'notebook' | 'checklist';
+type WorkspaceTab = 'youtube' | 'pdf' | 'companion' | 'notebook' | 'checklist' | 'teacher';
 
 function extractYouTubeId(url: string): string {
   const regExp =
@@ -68,6 +69,7 @@ const WorkspaceContent: React.FC = () => {
       if (e.altKey && e.key === '3') setActiveTab('companion');
       if (e.altKey && e.key === '4') setActiveTab('notebook');
       if (e.altKey && e.key === '5') setActiveTab('checklist');
+      if (e.altKey && e.key === '6') setActiveTab('teacher');
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
@@ -581,6 +583,19 @@ const WorkspaceContent: React.FC = () => {
                 <ShieldCheck className="w-3.5 h-3.5" />
                 <span>Ecosystem & PRD Check</span>
               </button>
+
+              <button
+                type="button"
+                onClick={() => setActiveTab('teacher')}
+                className={`px-3.5 py-2 rounded-xl text-xs font-semibold flex items-center gap-2 transition-all ${
+                  activeTab === 'teacher'
+                    ? 'bg-gradient-to-r from-indigo-600 via-purple-600 to-indigo-600 text-white shadow-lg shadow-indigo-600/30 ring-2 ring-indigo-400/50'
+                    : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
+                }`}
+              >
+                <GraduationCap className="w-4 h-4 text-indigo-300" />
+                <span className="font-bold">TEACHER MODE</span>
+              </button>
             </div>
           </div>
 
@@ -654,6 +669,13 @@ const WorkspaceContent: React.FC = () => {
                 });
                 setActiveTab('notebook');
               }}
+            />
+          )}
+
+          {activeTab === 'teacher' && (
+            <AIEngineeringTeacher
+              geminiApiKey={geminiApiKey}
+              activeLanguage={activeLanguage}
             />
           )}
         </main>

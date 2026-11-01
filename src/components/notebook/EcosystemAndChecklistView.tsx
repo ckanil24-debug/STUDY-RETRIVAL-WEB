@@ -106,6 +106,12 @@ export const EcosystemAndChecklistView: React.FC<PRDChecklistAndEcosystemProps> 
       status: 'Verified',
     },
     {
+      section: 'Feature 3 (Pedagogy)',
+      title: '🎓 Interactive AI Engineering Teacher (Teacher Mode)',
+      detail: '5 distinct teaching styles (Friendly, Detailed, Exam Prep, Strict Viva Examiner, Beginner-Friendly), step-by-step concepts, practical engineering examples, formula explainer with worked numericals, hint-first mode, and branch/semester adaptation.',
+      status: 'Verified',
+    },
+    {
       section: 'Pillar 5',
       title: '5-Tier Complexity Slider (ELI5 → Academic Peer Review)',
       detail: 'Instant zero-latency rewriting across all 5 difficulty tiers.',

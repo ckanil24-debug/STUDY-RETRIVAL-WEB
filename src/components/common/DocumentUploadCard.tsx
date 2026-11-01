@@ -10,12 +10,13 @@ import {
   CheckCircle2,
   Mic,
   Send,
+  GraduationCap,
 } from 'lucide-react';
 import { VoiceInputButton } from './VoiceInputButton';
 
 interface DocumentUploadCardProps {
-  activeTab: 'pdf' | 'youtube' | 'companion' | 'notebook' | 'checklist';
-  onSelectTab: (tab: 'pdf' | 'youtube' | 'companion' | 'notebook' | 'checklist') => void;
+  activeTab: 'pdf' | 'youtube' | 'companion' | 'notebook' | 'checklist' | 'teacher';
+  onSelectTab: (tab: 'pdf' | 'youtube' | 'companion' | 'notebook' | 'checklist' | 'teacher') => void;
   onUploadFile: (file: File) => void;
   onTrySamplePdf: () => void;
   onOpenLibrary: () => void;
@@ -109,7 +110,7 @@ export const DocumentUploadCard: React.FC<DocumentUploadCardProps> = ({
           <button
             type="button"
             onClick={() => onSelectTab('youtube')}
-            className={`px-6 py-2 rounded-xl text-xs sm:text-sm font-semibold flex items-center gap-2 transition-all duration-200 ${
+            className={`px-5 py-2 rounded-xl text-xs sm:text-sm font-semibold flex items-center gap-2 transition-all duration-200 ${
               activeTab === 'youtube'
                 ? 'bg-gradient-to-r from-red-600 to-rose-600 text-white shadow-md shadow-red-600/30'
                 : 'text-slate-400 hover:text-white'
@@ -117,6 +118,19 @@ export const DocumentUploadCard: React.FC<DocumentUploadCardProps> = ({
           >
             <Youtube className="w-4 h-4 text-rose-400" />
             <span>YouTube</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => onSelectTab('teacher')}
+            className={`px-5 py-2 rounded-xl text-xs sm:text-sm font-semibold flex items-center gap-2 transition-all duration-200 ${
+              activeTab === 'teacher'
+                ? 'bg-gradient-to-r from-indigo-600 via-purple-600 to-indigo-600 text-white shadow-md shadow-indigo-600/30'
+                : 'text-slate-400 hover:text-white'
+            }`}
+          >
+            <GraduationCap className="w-4 h-4 text-indigo-300" />
+            <span>{isMalayalam ? 'ടീച്ചർ മോഡ്' : 'Teacher Mode'}</span>
           </button>
         </div>
       </div>
