@@ -10,6 +10,7 @@ import {
   ArrowRight,
   HelpCircle,
   CheckCircle2,
+  Mic,
 } from 'lucide-react';
 import {
   ComplexityLevel,
@@ -17,12 +18,14 @@ import {
   CrossSourceQAPair,
   StudyFolder,
 } from '../../types/study';
+import { VoiceInputButton } from '../common/VoiceInputButton';
 
 interface SmartCompanionViewProps {
   folder: StudyFolder;
   complexity: ComplexityLevel;
   geminiApiKey: string;
   onJumpToVideoTimestamp: (seconds: number) => void;
+  activeLanguage?: string;
 }
 
 export const SmartCompanionView: React.FC<SmartCompanionViewProps> = ({
@@ -30,6 +33,7 @@ export const SmartCompanionView: React.FC<SmartCompanionViewProps> = ({
   complexity,
   geminiApiKey,
   onJumpToVideoTimestamp,
+  activeLanguage = 'EN',
 }) => {
   const [questionInput, setQuestionInput] = useState<string>('');
   const [customHistory, setCustomHistory] = useState<CrossSourceQAPair[]>([]);
@@ -300,30 +304,63 @@ Provide a clear, cross-referenced answer at Complexity Level ${complexity} (${co
           </div>
         </div>
 
-        {/* Interactive Question Input Bar */}
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            handleAskQuestion(questionInput);
-          }}
-          className="flex flex-col sm:flex-row gap-2.5"
-        >
-          <input
-            type="text"
-            value={questionInput}
-            onChange={(e) => setQuestionInput(e.target.value)}
-            placeholder='Ask across both sources (e.g., "How did the YouTube lecture explain the formula found on page 4 of the PDF?")'
-            className="flex-1 px-4 py-3 bg-slate-950 border border-slate-800 rounded-xl text-xs sm:text-sm text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500"
-          />
-          <button
-            type="submit"
-            disabled={isLoadingAI}
-            className="px-5 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white font-semibold text-xs sm:text-sm flex items-center justify-center gap-2 shrink-0 shadow-lg shadow-indigo-600/25 transition"
+        {/* Interactive Question Input Bar with 🎤 Voice Input */}
+        <div className="space-y-2">
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              handleAskQuestion(questionInput);
+            }}
+            className="flex flex-col sm:flex-row gap-2.5"
           >
-            <Send className="w-4 h-4" />
-            <span>{isLoadingAI ? 'Synthesizing...' : 'Query Both Sources'}</span>
-          </button>
-        </form>
+            <div className="relative flex-1">
+              <input
+                type="text"
+                value={questionInput}
+                onChange={(e) => setQuestionInput(e.target.value)}
+                placeholder={
+                  activeLanguage === 'ML'
+                    ? 'രണ്ട് സ്രോതസ്സുകളിലും തിരയുക (ഉദാ: "PDF പേജ് 4-ലെ ഫോർമുല വീഡിയോയിൽ എങ്ങനെ വിശദീകരിച്ചു?")'
+                    : 'Ask across both sources (e.g., "How did the YouTube lecture explain the formula found on page 4 of the PDF?")'
+                }
+                className="w-full pl-4 pr-28 py-3 bg-slate-950 border border-slate-800 rounded-xl text-xs sm:text-sm text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 shadow-inner"
+              />
+              <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1.5">
+                <VoiceInputButton
+                  currentValue={questionInput}
+                  defaultLanguage={activeLanguage === 'ML' ? 'ml-IN' : 'en-US'}
+                  onTranscript={(transcribed) => setQuestionInput(transcribed)}
+                />
+              </div>
+            </div>
+
+            <button
+              type="submit"
+              disabled={isLoadingAI || !questionInput.trim()}
+              className="px-5 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white font-semibold text-xs sm:text-sm flex items-center justify-center gap-2 shrink-0 shadow-lg shadow-indigo-600/25 transition"
+            >
+              <Send className="w-4 h-4" />
+              <span>{isLoadingAI ? 'Synthesizing...' : 'Query Both Sources'}</span>
+            </button>
+          </form>
+
+          {/* Voice Input Instructions & Editable Status */}
+          <div className="flex flex-wrap items-center justify-between text-[11px] text-slate-400 font-mono px-1">
+            <span className="flex items-center gap-1.5">
+              <Mic className="w-3.5 h-3.5 text-rose-400" />
+              <span>
+                {activeLanguage === 'ML'
+                  ? 'വോയ്‌സ് ഇൻപുട്ട്: മൈക്ക് ക്ലിക്ക് ചെയ്ത് മലയാളത്തിലോ ഇംഗ്ലീഷിലോ സംസാരിക്കുക. അയക്കുന്നതിന് മുൻപ് എഡിറ്റ് ചെയ്യാം.'
+                  : 'Voice Input: Click mic to speak in English or മലയാളം. Edit recognized text freely before submitting.'}
+              </span>
+            </span>
+            {questionInput && (
+              <span className="text-indigo-400 font-semibold">
+                {questionInput.length} characters (editable)
+              </span>
+            )}
+          </div>
+        </div>
 
         {/* Q&A Feed with Dual Citations */}
         <div className="space-y-4 pt-2">

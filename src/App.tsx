@@ -471,6 +471,10 @@ const WorkspaceContent: React.FC = () => {
                 }}
                 libraryCount={totalLibraryCount}
                 activeLanguage={activeLanguage}
+                onAskVoiceQuestion={(q) => {
+                  setActiveTab('companion');
+                  showToast(`Searching across sources: "${q}"`);
+                }}
               />
             )}
 
@@ -607,6 +611,7 @@ const WorkspaceContent: React.FC = () => {
               complexity={complexity}
               geminiApiKey={geminiApiKey}
               onJumpToVideoTimestamp={handleCrossSourceVideoJump}
+              activeLanguage={activeLanguage}
             />
           )}
 

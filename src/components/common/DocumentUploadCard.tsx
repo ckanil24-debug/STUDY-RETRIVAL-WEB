@@ -8,7 +8,10 @@ import {
   Youtube,
   Layers,
   CheckCircle2,
+  Mic,
+  Send,
 } from 'lucide-react';
+import { VoiceInputButton } from './VoiceInputButton';
 
 interface DocumentUploadCardProps {
   activeTab: 'pdf' | 'youtube' | 'companion' | 'notebook' | 'checklist';
@@ -16,6 +19,7 @@ interface DocumentUploadCardProps {
   onUploadFile: (file: File) => void;
   onTrySamplePdf: () => void;
   onOpenLibrary: () => void;
+  onAskVoiceQuestion?: (question: string) => void;
   libraryCount: number;
   activeLanguage: string;
 }
@@ -26,10 +30,12 @@ export const DocumentUploadCard: React.FC<DocumentUploadCardProps> = ({
   onUploadFile,
   onTrySamplePdf,
   onOpenLibrary,
+  onAskVoiceQuestion,
   libraryCount,
   activeLanguage,
 }) => {
   const [isDragging, setIsDragging] = useState(false);
+  const [heroVoiceText, setHeroVoiceText] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
 
@@ -271,6 +277,64 @@ export const DocumentUploadCard: React.FC<DocumentUploadCardProps> = ({
           </button>
         </div>
       )}
+
+      {/* Voice-First Instant Question Query Bar */}
+      <div className="bg-[#0f172a]/85 border border-slate-800 rounded-2xl p-2.5 sm:p-3 shadow-xl space-y-2">
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            if (heroVoiceText.trim() && onAskVoiceQuestion) {
+              onAskVoiceQuestion(heroVoiceText);
+              setHeroVoiceText('');
+            }
+          }}
+          className="flex items-center gap-2"
+        >
+          <div className="relative flex-1">
+            <input
+              type="text"
+              value={heroVoiceText}
+              onChange={(e) => setHeroVoiceText(e.target.value)}
+              placeholder={
+                isMalayalam
+                  ? '🎤 ശബ്ദത്തിലൂടെ ചോദിക്കുക: "പേജ് 4-ലെ സമവാക്യം എന്താണ്?"...'
+                  : '🎤 Ask question by voice (English or മലയാളം)...'
+              }
+              className="w-full pl-3.5 pr-28 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-xs sm:text-sm text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 font-sans"
+            />
+            <div className="absolute right-1.5 top-1/2 -translate-y-1/2 flex items-center gap-1">
+              <VoiceInputButton
+                currentValue={heroVoiceText}
+                defaultLanguage={isMalayalam ? 'ml-IN' : 'en-US'}
+                onTranscript={(text) => setHeroVoiceText(text)}
+              />
+            </div>
+          </div>
+
+          <button
+            type="submit"
+            disabled={!heroVoiceText.trim()}
+            className="px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 disabled:opacity-40 text-white font-semibold text-xs sm:text-sm flex items-center gap-1.5 shrink-0 transition shadow-md"
+          >
+            <Send className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">{isMalayalam ? 'ചോദിക്കുക' : 'Ask AI'}</span>
+          </button>
+        </form>
+
+        <div className="flex items-center justify-between text-[10px] text-slate-400 font-mono px-1">
+          <span className="flex items-center gap-1">
+            <Mic className="w-3 h-3 text-rose-400" />
+            <span>
+              {isMalayalam
+                ? 'മൈക്ക് അമർത്തി സംസാരിക്കുക (മലയാളം / English STT പിന്തുണയ്ക്കുന്നു)'
+                : 'Click mic to speak in English or മലയാളം. Edit text before querying.'}
+            </span>
+          </span>
+          {heroVoiceText && (
+            <span className="text-indigo-400 font-semibold">{heroVoiceText.length} chars</span>
+          )}
+        </div>
+      </div>
 
       {/* Quick Navigation Pills for Mobile/Web (Companion, Notebook, Checklist) */}
       <div className="flex flex-wrap items-center justify-center gap-2 pt-1 text-xs">
